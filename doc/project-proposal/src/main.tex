@@ -1,0 +1,36 @@
+\documentclass[12pt, a4paper]{report} % For thesis
+\usepackage[spanish]{babel}
+\usepackage[T1]{fontenc} % Accent support
+\usepackage[utf8]{inputenc} % Codification
+\usepackage{lmodern} % Font
+\usepackage{graphicx} % Images
+
+
+% Relative path to images
+\graphicspath{{../images/}}
+
+% Metadata
+\title{Anteproyecto}
+\author{Andrés San Martin Morígn}
+\date{\today}
+
+\begin{document}
+
+% Cover page
+\include{cover}
+
+% Indexes
+\tableofcontents
+
+% Sections
+\include{sections/01-state-of-the-art}
+\include{sections/02-problem-statement}
+\include{sections/03-objectives}
+\include{sections/04-project-timeline}
+\include{sections/05-contributions}
+
+% Bibliography
+\bibliographystyle{apalike}
+\bibliography{../bib/references}
+
+\end{document}

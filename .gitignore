@@ -1,0 +1,2 @@
+doc/project-proposal/output/*
+!doc/project-proposal/output/*.pdf
