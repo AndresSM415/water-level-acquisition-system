@@ -4,19 +4,24 @@
 \usepackage[utf8]{inputenc} % Codification
 \usepackage{lmodern} % Font
 \usepackage{graphicx} % Images
-\usepackage{pgfgantt} % Create Gantt Chart for the project timeline
-\usepackage{xcolor} % Personalize colors
-
+\usepackage{geometry}
 
 % Relative path to images
-\graphicspath{{../images/}}
+\graphicspath{{../img/}}
 
 % Metadata
-\title{Anteproyecto}
-\author{Andrés San Martin Morín}
-\date{\today}
+\newcommand{\mytitle}{Anteproyecto\\ Interfaz de adquisición de datos web para sistema de tres tanques}
+\newcommand{\myauthor}{Andrés San Martin Morín}
+\newcommand{\mydate}{\today}
+
+\title{\mytitle}
+\author{\myauthor}
+\date{\mydate}
 
 \begin{document}
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\arabic{section}.\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\arabic{section}.\arabic{subsection}.\arabic{subsubsection}}
 
 % Cover page
 \include{cover}

@@ -5,28 +5,28 @@
         \item Desarrollo de un sistema de adquisición de datos web para el sistema de nivel de tanques interconectados, que permita a los estudiantes validar modelos teóricos sin requerir conocimientos técnicos avanzados.
         \item \textbf{Back-end}: Desarrollar una arquitectura de servidor escalable que gestione la adquisición, transmisión y almacenamiento de datos del sistema.
         \item \textbf{Front-end}: Crear una interfaz web intuitiva que permita a los estudiantes visualizar datos en tiempo real, y descargar resultados.
-        \item \textbf{Acondicionamiento de hardware}: Interconectar los sensores del sistema con la raspberry Pi.
+        \item \textbf{Acondicionamiento de hardware}: Interconectar los sensores del sistema de tanques con la Raspberry Pi.
     \end{itemize}
 
 \subsection{Particulares}
     \begin{itemize}
         \item \textbf{Back-end}
             \begin{itemize}
-                \item Diseñar la arquitectura del servidor bajo el patrón Modelo-Vista-Controlador (MVC).
-                \item Definir la estructura y relaciones de la base de datos.
-                \item Implementar el flujo de comunicación entre dispositivos y servidor mediante MQTT.
-                \item Desarrollar el servidor usando NodeJS.
-                \item Crear APIs para conectar el Front-end con el Back-end.
+                \item \textbf{Arquitectura MVC}: Diseñar la arquitectura del servidor bajo el patrón Modelo-Vista-Controlador (MVC).
+                \item \textbf{Base de datos}: Definir la estructura y relaciones de la base de datos.
+                \item \textbf{Comunicación MQTT}: Implementar el flujo de comunicación entre dispositivos y servidor mediante MQTT.
+                \item \textbf{Servidor NodeJS}: Desarrollar el servidor usando NodeJS.
+                \item \textbf{APIs}: Crear APIs para conectar el Front-end con el Back-end.
             \end{itemize}
         \item \textbf{Front-end}
             \begin{itemize}
-                \item Crear una interfaz gráfica en React.js que muestre datos en tiempo real.
-                \item Implementar funcionalidad para descargar datos en formatos compatibles con herramientas de análisis (CSV, Excel, txt).
+                \item \textbf{GUI}: Crear una interfaz gráfica en React.js que muestre datos en tiempo real.
+                \item \textbf{Descarga de datos}: Implementar funcionalidad para descargar datos en formatos compatibles con herramientas de análisis (CSV, Excel, txt).
             \end{itemize}
         \item \textbf{Acondicionamiento de Hardware}
             \begin{itemize}
-                \item Selecciónar ADCs para el acondicionamiento de señales analógicas.
-                \item Diseñar e implementar un shield PCB que interconecte los sensores del sistema de tanques con la Raspberry Pi.
-                \item Desarrollar un script en Python que procese las señales de los sensores, y los publique en tiempo real en un servidor MQTT.
+                \item \textbf{Selección de componentes}: Seleccionar ADCs para el acondicionamiento de señales analógicas.
+                \item \textbf{PCB}: Diseñar e implementar un shield PCB que interconecte los sensores del sistema de tanques con la Raspberry Pi.
+                \item \textbf{Script}: Desarrollar un script en Python que procese las señales de los sensores, y los publique en tiempo real en un servidor MQTT.
             \end{itemize}
     \end{itemize}
