@@ -1,2 +1,15 @@
 doc/project-proposal/output/*
 !doc/project-proposal/output/*.pdf
+.idea/
+node_modules/
+package-lock.json
+
+# --- Python /uv ---
+python/.venv/
+python/__pycache__/
+python/*.pyc
+python/*.pyo
+python/*.pyd
+python/*.egg-info/
+python/.eggs/
+python/*.log
