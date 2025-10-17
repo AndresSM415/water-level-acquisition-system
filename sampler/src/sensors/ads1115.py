@@ -15,14 +15,16 @@ class ADS1115:
         self.ads.gain = 1
         self.ads.data_rate = 8
         self.ch = {
-            0: AnalogIn(self.ads, ADS_Pin.A0, ADS_Pin.A1),
-            1: AnalogIn(self.ads, ADS_Pin.A2, ADS_Pin.A3)
+            0: AnalogIn(self.ads, ADS_Pin.A0),
+            1: AnalogIn(self.ads, ADS_Pin.A1),
+            2: AnalogIn(self.ads, ADS_Pin.A2),
+            3: AnalogIn(self.ads, ADS_Pin.A3)
         }
 
     def voltage(self, ch: int) -> float:
         """Returns the voltage from the ADC pin as a floating point value."""
         if ch not in self.ch:
-            raise ValueError(f"Invalid channel {ch}. Must be 0-1")
+            raise ValueError(f"Invalid channel {ch}. Must be {self.ch.keys()}")
         return round(self.ch[ch].voltage, 5)
 
     def value(self, ch: int) -> float:
@@ -33,7 +35,7 @@ class ADS1115:
         lower resolution, the value is 16-bit.
         """
         if not ch in self.ch:
-            raise ValueError(f"Invalid channel {ch}. Must be 0-1")
+            raise ValueError(f"Invalid channel {ch}. {self.ch.keys()}")
         return self.ch[ch].value
 
 
@@ -41,6 +43,10 @@ if __name__ == "__main__":
     import time
     adc = ADS1115()
     while True:
-        print(f"ch0: {round(adc.voltage(0), 3)}V, ch1: {round(adc.voltage(1), 3)}V")
-        time.sleep(1)
+        print(
+            f"ch0: {round(adc.voltage(0), 3)}V, "
+            f"ch1: {round(adc.voltage(1), 3)}V, "
+            f"ch2: {round(adc.voltage(2), 3)}V, "
+        )
+        time.sleep(0.2)
 

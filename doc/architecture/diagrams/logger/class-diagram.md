@@ -5,59 +5,43 @@ title: Sampler Class Diagram
 classDiagram
 class ADS1115 {
     config: ADS1115Config
-    constructor(ADS1115Config)
-    +start()
-    +readChannel(ch: number) number
+    +voltage(ch: int) float
+    +value(ch: int) float
 }
 
 class PWMReader {
-    currentReading: PWMReading
+    reading: PWMReading
     config: PWMReaderConfig
     constructor(PWMReaderConfig)
-    +start()
+    start()
     +stop()
-    +getCurrentReading() PWMReading
-    handleEdge(level: number, tick: number)
+    tick_diff(start_tick: int, end_tick: int) int$
+    is_valid_period(period: int) bool
+    handle_edge(gpio: int, level: int, tick: int)
+    get_current_reading() PWMReading
 }
 
 class YFS401 {
     currentReading: YSF401Reading
     config: YFS401Config
     constructor(YFS401Config)
-    +start()
+    start()
     +stop()
-    +getCurrentReading() YSF401Reading
-    startMeasurementLoop()
+    count_pulse(gpio: int, level: int, tick: int)
+    calculate_flow(pulses: int, elapsed_seconds: float) YSF401Reading
+    get_current_reading() YSF401Reading async
+    run_calculation_loop() async
+    reading() YSF401Reading
 }
+
 
 class Sampler {
-    readers: Reader[*]
-    samplingTimer: Timer
-    sampleInterval: number
-    +start()
-    +stop()
-    startPeriodicSampling()
-    insertData()
-}
-class Tanks {
-    measurementTimer: Timer
-    sampleInterval: number
-    startSampling()
+    tasks: List[Task]
+    sample_interval: number
+    +main()
+    insertData() async
 }
 
-class FlowMeter
-
-class Hose
-
-class Reader {
-    <<Abstract>>
-    isRunning: boolean
-    value: T
-    +start()
-    +stop()
-    +getValue() T
-    updateValue(value: T)
-}
 
 class DB {
     samples: sqliteTable
@@ -66,21 +50,15 @@ class DB {
 }
 
 
-Tanks --* ADS1115
-FlowMeter --* YFS401
-    Hose --* PWMReader
-    Reader <|-- Tanks
-    Reader <|-- FlowMeter
-    Reader <|-- Hose
+
 %%    Tanks --|> Reader
 %%    FlowMeter --|> Reader
 %%    Hose --|> Reader
     
 
-Sampler --* Tanks
-Sampler --* FlowMeter
-Sampler --* Hose
-Sampler --* DB
-Sampler o--"0..*" Reader : uses
+Sampler *--"1--*" ADS1115 : tanks
+Sampler *--"1--*" PWMReader: hose
+Sampler *--"1--*" YFS401: flow meter
+Sampler *-- DB
 
 ```

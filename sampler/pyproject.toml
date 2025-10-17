@@ -6,8 +6,10 @@ readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
 	"adafruit-blinka>=8.66.2",
-    	"adafruit-circuitpython-ads1x15>=3.0.0",
-    	"gpiozero>=2.0.1",
-    	"pigpio>=1.78",
-    	"rpi-gpio>=0.7.1",
+	"adafruit-circuitpython-ads1x15>=3.0.0",
+	"aiosqlite>=0.21.0",
+	"gpiozero>=2.0.1",
+	"pigpio>=1.78",
+	"rpi-gpio>=0.7.1",
+	"sqlalchemy>=2.0.44",
 ]

@@ -111,9 +111,9 @@ class YFS401:
             total_liters=0.0
         )
 
-        self.start()
+        self._start()
 
-    def start(self) -> None:
+    def _start(self) -> None:
         """
         Start monitoring the flow sensor.
         Raises:
@@ -247,7 +247,7 @@ class YFS401:
 if __name__ == "__main__":
     print("Starting YF-S401 flow sensor with pigpio...")
     print("Make sure pigpiod is running: sudo systemctl start pigpiod\n")
-    hose = YFS401(27, debounce_timeout=0.1)
+    flow_meter = YFS401(27, debounce_timeout=0.1)
 
     async def print_values(sensor: YFS401):
         """Print sensor readings every second"""
@@ -263,8 +263,8 @@ if __name__ == "__main__":
         """Main async function"""
         # Create tasks
         tasks = [
-            asyncio.create_task(print_values(hose)),
-            asyncio.create_task(hose.run_calculation_loop())
+            asyncio.create_task(print_values(flow_meter)),
+            asyncio.create_task(flow_meter.run_calculation_loop())
         ]
 
         try:
@@ -272,7 +272,7 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             print("\nStopping...")
         finally:
-            hose.stop()
+            flow_meter.stop()
             print("Sensor stopped")
 
 
@@ -281,4 +281,4 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         print("\nExiting...")
-        hose.stop()
+        flow_meter.stop()
