@@ -1,2 +1,33 @@
+# Enviroment variables
+.env
+
+# Database files
+*.db
+
+
+# Documentation
 doc/project-proposal/output/*
 !doc/project-proposal/output/*.pdf
+
+# Bun
+node_modules/
+package-lock.json
+
+# Python
+__pycache__/
+.venv/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+
+# Logs
+*.log
+/var/log/
+
+# IDE 
+.vscode/
+.idea/
+*.swp
+*.swo

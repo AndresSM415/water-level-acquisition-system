@@ -1,0 +1,19 @@
+{
+  "name": "water-level-acquisition-system",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/i2c-bus": "^5.1.2",
+    "@types/onoff": "^4.1.0",
+    "@types/pigpio": "^3.1.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "ads1x15": "^1.2.0",
+    "i2c-bus": "^5.2.3"
+  }
+}
