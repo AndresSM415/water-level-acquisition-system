@@ -1,15 +1,33 @@
+# Enviroment variables
+.env
+
+# Database files
+*.db
+
+
+# Documentation
 doc/project-proposal/output/*
 !doc/project-proposal/output/*.pdf
-.idea/
+
+# Bun
 node_modules/
 package-lock.json
 
-# --- Python /uv ---
-python/.venv/
-python/__pycache__/
-python/*.pyc
-python/*.pyo
-python/*.pyd
-python/*.egg-info/
-python/.eggs/
-python/*.log
+# Python
+__pycache__/
+.venv/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+
+# Logs
+*.log
+/var/log/
+
+# IDE 
+.vscode/
+.idea/
+*.swp
+*.swo

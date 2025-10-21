@@ -2,8 +2,11 @@ import asyncio
 import pigpio
 from time import time
 from typing import Optional
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from threading import Lock
+
+from src.config import configure_logger
+
 
 @dataclass
 class YFS401Reading:
@@ -245,18 +248,21 @@ class YFS401:
         return self.is_running
 
 if __name__ == "__main__":
-    print("Starting YF-S401 flow sensor with pigpio...")
-    print("Make sure pigpiod is running: sudo systemctl start pigpiod\n")
+    log.info("Starting YF-S401 flow sensor with pigpio...")
+    log.info("Make sure pigpiod is running: sudo systemctl start pigpiod\n")
     flow_meter = YFS401(27, debounce_timeout=0.1)
 
     async def print_values(sensor: YFS401):
         """Print sensor readings every second"""
         while True:
             reading = sensor.reading
-            print(f"Flow: {reading.liters_per_minute:.2f} L/min | "
+            log.info(f"Flow: {reading.liters_per_minute:.2f} L/min | "
                   f"Total: {reading.total_liters:.3f} L | "
                   f"Pulses: {reading.pulses}")
             await asyncio.sleep(1)
+
+
+    log = configure_logger(YFS401.__name__)
 
 
     async def main():
@@ -270,15 +276,7 @@ if __name__ == "__main__":
         try:
             await asyncio.gather(*tasks, return_exceptions=True)
         except KeyboardInterrupt:
-            print("\nStopping...")
+            log.warning("\nStopping...")
         finally:
             flow_meter.stop()
-            print("Sensor stopped")
-
-
-    # Run
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("\nExiting...")
-        flow_meter.stop()
+            log.info("Sensor stopped")

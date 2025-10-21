@@ -7,12 +7,16 @@ Architecture:
     - Single loop = simple and efficient
 """
 import asyncio
+import argparse
 from datetime import datetime, time as dtime
 from time import time
 from typing import Dict, List
 from dataclasses import dataclass, asdict
 
-from sensors import ADS1115, PWMReader, YFS401
+from src.config import Config, configure_logger
+Config.load_env_file()
+from src.sensors import ADS1115, PWMReader, YFS401
+from src.db import Database, cleanup_old_data
 
 
 @dataclass
@@ -47,36 +51,38 @@ class Sampler:
     - Handles graceful shutdown
 
     Usage:
-        sampler = Sampler(db_interval=0.2) # Save to DB every 0.2 seconds
+        sampler = Sampler(db_interval=0.5) # Save to DB every 0.5 seconds
         await sampler.run()
     """
-    def __init__(self, sample_interval: float = 0.5):
+    def __init__(self):
         """
         Initialize sampler and all sensors.
-        :param sample_interval: How often to insert to DB (seconds).
         """
-        if sample_interval < .5:
-            raise ValueError("sample interval must be at least 500 ms")
+        log.info("Initializing DB...")
+        self.db = Database()
 
-        print("Initializing sensors...")
-        self.tank = ADS1115()
-        self.flow_meters: Dict[int, YFS401] = {
-            0: YFS401(10),
-            1: YFS401(9),
-        }
-        self.hoses: Dict[int, PWMReader] = {
-            0: PWMReader(17, 490),
-            1: PWMReader(27, 490),
-        }
+        log.info("Initializing sensors...")
+        try:
+            self.tank = ADS1115()
+            self.flow_meters: Dict[int, YFS401] = {
+                0: YFS401(10),
+                1: YFS401(9),
+            }
+            self.hoses: Dict[int, PWMReader] = {
+                0: PWMReader(17, 490),
+                1: PWMReader(27, 490),
+            }
 
-        # Task tracking
-        self._tasks: List[asyncio.Task] = []
-        self._is_running = False
-        self._tick_event = None
+            # Task tracking
+            self._tasks: List[asyncio.Task] = []
+            self._is_running = False
+            self._tick_event = None
 
-        self.sample_interval = sample_interval
-
-        print("Sensors initialized and running.")
+            self.sample_interval = Config.SAMPLE_INTERVAL
+        except Exception as e:
+            log.error(f"Error initializing sensors: {e}")
+            raise
+        log.info("Sensors initialized and running.")
 
     def _collect_sample(self) -> SampleData:
         """
@@ -99,31 +105,23 @@ class Sampler:
     async def _insert_to_db(self, sample: SampleData) -> None:
         """
         Insert a sample to DB.
-        Replace it with actual DB logic.
         :param sample: Sample to insert.
         """
         try:
-            # Example with SQLAlchemy async
-            # async with self.db.session() as session:
-            #     session.add(SampleModel(**sample.to_dict()))
-            #     await session.commit()
-
-            # Example with asyncpg
-            # await self.db.execute(
-            #     "INSERT INTO samples (...) VALUES (...)",
-            #     *sample.to_dict().values()
-            # )
-
-            # Placeholder - replace with your ORM
-            dt = datetime.fromtimestamp(sample.timestamp).strftime('%H:%M:%S.%f')[:-3]
-            print(
-                f"[{dt}] "
-                f"Tanks: {sample.tank1_voltage:.2f}V, {sample.tank2_voltage:.2f}V, {sample.tank3_voltage:.2f}V | "
-                f"Flow: {sample.flow1_lps:.3f} L/s, {sample.flow2_lps:.3f} L/s | "
-                f"Hose: {sample.hose1_duty_cycle:.1f}%, {sample.hose2_duty_cycle:.1f}%"
+            await self.db.insert_sample(sample.to_dict())
+            log.info(
+                "[%s] Tanks: %.2fV, %.2fV, %.2fV | Flow: %.3f L/s, %.3f L/s | Hose: %.1f%%, %.1f%%",
+                datetime.fromtimestamp(sample.timestamp).strftime('%H:%M:%S.%f')[:-3],
+                sample.tank1_voltage,
+                sample.tank2_voltage,
+                sample.tank3_voltage,
+                sample.flow1_lps,
+                sample.flow2_lps,
+                sample.hose1_duty_cycle,
+                sample.hose2_duty_cycle
             )
         except Exception as e:
-            print(f"Error inserting to DB: {e}")
+            log.error(f"Error inserting to DB: {e}")
 
     async def _main_loop(self) -> None:
         """
@@ -133,25 +131,29 @@ class Sampler:
             while self._is_running:
                 await self._tick_event.wait()
 
+                t1 = time()
                 sample = self._collect_sample()
-                print(datetime.fromtimestamp(time()).strftime('%H:%M:%S.%f')[:-3])
+                t2 = time()
                 await self._insert_to_db(sample)
-
+                t3 = time()
+                print(f"sensors: {int((t2-t1)*1000)}, db: {int((t3-t2)*1000)}, total: {int((t3-t1)*1000)}")
                 self._tick_event.clear()
         except asyncio.CancelledError:
-            print("Main loop cancelled.")
+            log.info("Main loop cancelled.")
             raise
 
     async def run(self) -> None:
         """
         Main entry pint - starts all tasks and manages the lifecycle.
         """
+        await self.db.init_db()
+
         self._is_running = True
         self._tick_event = asyncio.Event()
 
-        print("\n" + "=" * 60)
-        print("Starting Water Level Acquisition System")
-        print("=" * 60 + "\n")
+        log.info("=" * 60)
+        log.info("Starting Water Level Acquisition System")
+        log.info("=" * 60 + "\n")
 
         self._tasks = [
             asyncio.create_task(self._main_loop(), name="main"),
@@ -163,7 +165,7 @@ class Sampler:
         try:
             await asyncio.gather(*self._tasks, return_exceptions=True)
         except KeyboardInterrupt:
-            print("\n\nShutdown requested...")
+            log.warning("\n\nShutdown requested...")
         finally:
             await self._cleanup()
 
@@ -176,12 +178,16 @@ class Sampler:
 
         await asyncio.gather(*self._tasks, return_exceptions=True)
 
-        print("Stopping sensors...")
+        log.info("Stopping sensors...")
         self.flow_meters[0].stop()
         self.flow_meters[1].stop()
         self.hoses[0].stop()
         self.hoses[1].stop()
-        print("Shutdown complete.")
+
+        log.info("Closing database...")
+        await self.db.close()
+
+        log.info("Shutdown complete.")
 
     async def ticker(self) -> None:
         """Using Event for periodic triggers"""
@@ -199,6 +205,16 @@ class Sampler:
                 t0 = time()
 
 
+log = configure_logger(Sampler.__name__)
+
+
 if __name__ == "__main__":
-    sampler = Sampler(0.5)
-    asyncio.run(sampler.run())
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cleanup", action="store_true", help="Delete old records from DB.")
+    args = parser.parse_args()
+
+    if args.cleanup:
+        asyncio.run(cleanup_old_data())
+    else:
+        sampler = Sampler()
+        asyncio.run(sampler.run())

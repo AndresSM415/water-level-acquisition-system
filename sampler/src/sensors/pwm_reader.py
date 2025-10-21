@@ -28,6 +28,7 @@ import pigpio
 from typing import Optional, Callable, Dict, Any
 from dataclasses import dataclass
 
+from src.config import configure_logger
 
 @dataclass
 class PWMReading:
@@ -49,7 +50,6 @@ class PWMReader:
         frequency_tolerance: Allowed deviation from expected frequency (0-1)
         pull_up_down: Pull up/down resistor configuration (optional)
     """
-
     def __init__(
             self,
             pin: int,
@@ -321,6 +321,9 @@ class PWMReader:
         return self.current_reading.duty_cycle
 
 
+log = configure_logger(PWMReader.__name__)
+
+
 # Example usage
 if __name__ == "__main__":
     import time
@@ -336,7 +339,7 @@ if __name__ == "__main__":
     # reader.on_reading(print_reading)
 
     try:
-        print("Reading PWM signal... Press Ctrl+C to stop")
+        log.info("Reading PWM signal... Press Ctrl+C to stop")
 
         # # Run for 10 seconds
         # time.sleep(10)
@@ -346,10 +349,11 @@ if __name__ == "__main__":
         # print(f"\nStatistics: {stats}")
 
         while True:
-            print(reader.duty_cycle)
+            log.info(reader.duty_cycle)
             time.sleep(0.2)
 
     except KeyboardInterrupt:
-        print("\nStopping...")
+        log.warning("\nStopping...")
     finally:
         reader.stop()
+

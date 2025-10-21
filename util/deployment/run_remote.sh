@@ -21,5 +21,5 @@ rsync -avz --delete \
 	../. ${PI_USER}@${PI_HOST}:${PI_PATH}
 
 echo "Running project remotely..."
-ssh -t ${PI_USER}@${PI_HOST} "cd ${PI_PATH}/sampler && /home/${PI_USER}/.local/bin/uv run src/main.py"
+ssh -t ${PI_USER}@${PI_HOST} "cd ${PI_PATH}/sampler && /home/${PI_USER}/.local/bin/uv run -m src.sampler"
 
