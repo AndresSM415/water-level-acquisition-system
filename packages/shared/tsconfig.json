@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "types": ["bun-types"]
+  },
+  "exclude": [
+    "dist",
+    "node_modules"
+  ],
+  "include": ["src/**/*"],
+  "references": [
+    { "path": "../shared" }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@wlas/shared",
+  "version": "0.0.1",
+  "type": "module",
+  "module": "dist/index.ts",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types/index.ts",
+    "./types/sensor": "./src/types/sensor.ts",
+    "./types/api": "./src/types/api.ts",
+    "./types/error": "./src/types/error.ts"
+  },
+  "private": true,
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc -b --watch"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

@@ -8,6 +8,7 @@
 - Fix PWM max/min level reading. 
 - Bun server
 - Clean up exiting code exceptions.
+- Add more aggresive pragma optimizations on db (busy_timeout = 5000, synchronous = OFF, cache_size = -2000000, temp_store = memory)
 
 ### Added
 - ADS readings lasts 195ms (16 sps so 62.5ms per channel. If less period desired then this parameter needs to be increased.)
