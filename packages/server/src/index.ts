@@ -58,7 +58,7 @@ app.get("/", (c) => {
 
 // Mount routes with dependencies
 app.route("/api/stream", createStreamRoute(sseManager, sensorService));
-app.route("/api/export", createExportRoute(sensorService))
+app.route("/api/export", createExportRoute(sensorService, sseManager))
 app.route("/api/stats", createStatsRoute(sseManager, sensorService));
 
 // 404 handler

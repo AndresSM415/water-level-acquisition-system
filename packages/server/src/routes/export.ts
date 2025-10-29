@@ -2,35 +2,38 @@
  * Export route - Download sensor data as CSV.
  */
 import {Hono} from "hono";
+import {SSEManager} from "../services/sse-manager.ts";
 import type {SensorService} from "../services/sensor-service.ts";
 import type {ExportFormat, DecimationInterval} from "@wlas/shared";
 
-export function createExportRoute(sensorService: SensorService) {
+export function createExportRoute(sensorService: SensorService, sseManager: SSEManager) {
     const app = new Hono();
     app.get("/", async (c) => {
         try {
-            const startTime = parseFloat(c.req.query("startTime") || "0");
-            const endTime = parseFloat(String(Date.now() / 1000));
-            const format = "csv" as ExportFormat;
+            const clientId = c.req.query("clientId");
             const decimation = parseInt(c.req.query("decimation") || "1") as DecimationInterval;
-            const limit = parseInt(c.req.query("limit") || "3600");
-
-            // Validate parameters
-            if (isNaN(startTime) || startTime <= 0) {
-                return c.json({ error: "Invalid startTime", code: "INVALID_PARAM"}, 400);
+            if(clientId === undefined || !sseManager.hasClient(clientId)) {
+                return c.json({
+                    error: "Missing or incorrect clientId",
+                    code: "INVALID_PATH"
+                }, 400);
             }
-
-            if (isNaN(endTime) || startTime >= endTime) {
-                return c.json({ error: "Invalid endTime", code: "INVALID_PARAM"}, 400);
+            if (![1, 2, 5, 10, 30, 60].includes(decimation as DecimationInterval)){
+                return c.json({
+                    error: "Incorrect decimation value",
+                    code: "INVALID_PATH"
+                }, 400);
             }
-
-            if (!["csv"].includes(format)) {
-                return c.json({ error: "Invalid format (csv)", code: "INVALID_PARAM"}, 400);
+            const startTime = sseManager.getConnectionTime(clientId);
+            if (!startTime) {
+                return c.json({
+                    error: "Client no connected or session expired.",
+                    code: "INVALID_CLIENT"
+                }, 400)
             }
-
-            if (![1, 2, 5, 10, 30, 60].includes(decimation)) {
-                return c.json({ error: "Invalid startTime", code: "INVALID_PARAM"}, 400);
-            }
+            const endTime = Date.now() / 1000;
+            const format = "csv" as ExportFormat;
+            const limit = 3600;
 
             // Export data via service
             const data = await sensorService.exportData(
@@ -42,7 +45,10 @@ export function createExportRoute(sensorService: SensorService) {
             );
 
             if (!data || data.length === 0) {
-                return c.json({error: "No data in time range", code: "NO_DATA"}, 404);
+                return c.json({
+                    error: "No data in time range",
+                    code: "NO_DATA"
+                }, 404);
             }
 
             return c.text(data, 200, {
@@ -51,10 +57,11 @@ export function createExportRoute(sensorService: SensorService) {
             });
         } catch (error) {
             console.error("export error:", error);
-            return c.json(
-                {error: "Export failed", code: "EXPORT_ERROR", details: String(error)},
-                500
-            );
+            return c.json({
+                    error: "Export failed",
+                    code: "EXPORT_ERROR",
+                    details: String(error)
+            }, 500);
         }
     });
     return app;

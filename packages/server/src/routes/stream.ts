@@ -56,8 +56,9 @@ export function createStreamRoute(
             await stream.writeSSE({
                 data: JSON.stringify({
                     type: "connected",
+                    clientId: clientId,
                     message: `Connected as ${clientId}`,
-                    timestamp: Date.now() / 1000
+                    timestamp: Date.now() / 1000,
                 } as SSEMessage)
             });
 

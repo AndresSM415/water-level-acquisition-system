@@ -11,8 +11,13 @@ interface SSEStream {
     writeSSE: (message: { data: string }) => Promise<void>;
 }
 
+interface ClientSession {
+    stream: SSEStream;
+    connectedAt: number;
+}
+
 export class SSEManager {
-    private clients = new Map<string, SSEStream>();
+    private clients = new Map<string, ClientSession>();
     private readonly maxClients: number;
 
     constructor(maxClients: number = 60) {
@@ -25,7 +30,10 @@ export class SSEManager {
     addClient(clientId: string, stream: SSEStream): boolean {
         if (this.isFull())
             return false;
-        this.clients.set(clientId, stream);
+        this.clients.set(clientId, {
+            stream,
+            connectedAt: Date.now() / 1000
+        } as ClientSession);
         return true;
     }
 
@@ -51,15 +59,29 @@ export class SSEManager {
     }
 
     /**
+     * Get connection timestamp for a client
+     */
+    getConnectionTime(clientId: string): number | null {
+        return this.clients.get(clientId)?.connectedAt ?? null;
+    }
+
+    /**
+     * Check if client exists.
+     */
+    hasClient(clientId: string): boolean {
+        return this.clients.has(clientId)
+    }
+
+    /**
      * Broadcast a message to all connected clients.
      */
     async broadcast(message: SSEMessage): Promise<void> {
         const data = JSON.stringify(message);
         const deadClients: string[] = [];
 
-        for (const [clientId, stream] of this.clients.entries())
+        for (const [clientId, session] of this.clients.entries())
             try {
-                await stream.writeSSE({ data})
+                await session.stream.writeSSE({ data })
             } catch (error) {
                 deadClients.push(clientId);
             }

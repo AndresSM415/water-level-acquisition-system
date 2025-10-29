@@ -33,6 +33,7 @@ export type SSEMessageType = "connected" | "reading" | "error";
  */
 export interface SSEMessage {
     type: SSEMessageType;
+    clientId?: string;
     reading?: DashboardReading;
     message?: string;
     timestamp: number;
