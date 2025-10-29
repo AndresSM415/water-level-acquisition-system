@@ -2,7 +2,7 @@
 set -e
 
 PI_USER="dr_control"
-PI_HOST="192.168.1.5"
+PI_HOST="192.168.1.6"
 PI_PATH="/home/${PI_USER}/dr_control_project"
 
 
@@ -18,7 +18,10 @@ rsync -avz --delete \
 	--exclude ".idea/" \
 	--exclude "__pycache__/" \
 	--exclude "util/" \
-	../. ${PI_USER}@${PI_HOST}:${PI_PATH}
+	--exclude "node_modules/" \
+	--exclude "CHANGELOG.md" \
+	--exclude ".env.template" \
+	. ${PI_USER}@${PI_HOST}:${PI_PATH}
 
 echo "Running project remotely..."
 ssh -t ${PI_USER}@${PI_HOST} "cd ${PI_PATH}/sampler && /home/${PI_USER}/.local/bin/uv run -m src.sampler"
