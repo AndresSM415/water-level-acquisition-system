@@ -58,7 +58,7 @@ export function createStreamRoute(
                     type: "connected",
                     clientId: clientId,
                     message: `Connected as ${clientId}`,
-                    timestamp: Date.now() / 1000,
+                    timestamp: Date.now(),
                 } as SSEMessage)
             });
 

@@ -4,6 +4,7 @@
 import { Hono } from 'hono';
 import type {SSEManager} from "../services/sse-manager.ts";
 import type {SensorService} from "../services/sensor-service.ts";
+import {ENV} from "../lib";
 
 interface ServerStats {
     uptime: number;
@@ -36,7 +37,7 @@ export function createStatsRoute(
                 uptime: Math.floor((Date.now() - startTime) / 1000),
                 clients: {
                     active: sseManager.getClientCount(),
-                    max: parseInt(process.env.MAX_SSE_CLIENTS || "0", 10),
+                    max: ENV.MAX_SSE_CLIENTS,
                     atCapacity: sseManager.isFull()
                 },
                 database: {

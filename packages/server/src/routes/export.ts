@@ -3,8 +3,10 @@
  */
 import {Hono} from "hono";
 import {SSEManager} from "../services/sse-manager.ts";
+import {formatTime, formatTimestamp} from "../lib"
 import type {SensorService} from "../services/sensor-service.ts";
 import type {ExportFormat, DecimationInterval} from "@wlas/shared";
+
 
 export function createExportRoute(sensorService: SensorService, sseManager: SSEManager) {
     const app = new Hono();
@@ -53,7 +55,9 @@ export function createExportRoute(sensorService: SensorService, sseManager: SSEM
 
             return c.text(data, 200, {
                 "Content-Type": "text/csv",
-                "Content-Disposition": `attachment; filename="sensor-data-${startTime}-to-${endTime}.csv"`,
+                "Content-Disposition": `attachment; filename="tanques-interconectados-${formatTimestamp(startTime)}-duracion-${formatTime(endTime-startTime)}.csv"`,
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Expose-Headers": "Content-Disposition"
             });
         } catch (error) {
             console.error("export error:", error);
