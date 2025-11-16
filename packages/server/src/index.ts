@@ -4,6 +4,7 @@
 import {Hono} from "hono";
 import {cors} from "hono/cors";
 import {logger} from "hono/logger";
+import {serveStatic} from "hono/bun";
 import fs from "node:fs";
 
 // Services and repositories
@@ -19,6 +20,22 @@ import {createStatsRoute} from "./routes/stats.ts";
 
 // Configuration
 import {ENV} from "./lib";
+import {join} from "path";
+import * as path from "node:path";
+
+// MIME type helper
+const getMimeType = (filePath: string): string => {
+    if (filePath.endsWith('.js')) return 'application/javascript';
+    if (filePath.endsWith('.css')) return 'text/css';
+    if (filePath.endsWith('.json')) return 'application/json';
+    if (filePath.endsWith('.html')) return 'text/html';
+    if (filePath.endsWith('.svg')) return 'image/svg+xml';
+    if (filePath.endsWith('.png')) return 'image/png';
+    if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) return 'image/jpeg';
+    if (filePath.endsWith('.gif')) return 'image/gif';
+    if (filePath.endsWith('.woff2')) return 'font/woff2';
+    return 'application/octet-stream';
+};
 
 // Initialize dependencies
 const sensorRepository = new SensorRepository();
@@ -40,7 +57,7 @@ app.use(
 );
 
 // Health check
-app.get("/", (c) => {
+app.get("/info", (c) => {
     return c.json({
         service: "Water Level Acquisition System",
         version: "0.0.1",
@@ -57,6 +74,53 @@ app.get("/", (c) => {
 app.route("/api/stream", createStreamRoute(sseManager, sensorService));
 app.route("/api/export", createExportRoute(sensorService, sseManager))
 app.route("/api/stats", createStatsRoute(sseManager, sensorService));
+
+// Explicit routes for common assets
+app.get('/assets/:filename', async (c) => {
+    const filename = c.req.param('filename');
+    const filePath = join(ENV.FRONTEND_PATH, 'assets', filename);
+
+    try {
+        const file = Bun.file(filePath);
+        const mimeType = getMimeType(filePath);
+        return c.body(await file.text(), 200, {
+            'Content-Type': mimeType,
+        });
+    } catch (error) {
+        return c.notFound();
+    }
+})
+
+// Serve frontend static files
+app.use('/', async (c, next) => {
+    // Skip API routs
+    if (c.req.path.startsWith('/api') || c.req.path.startsWith('/info')) {
+        return next();
+    }
+
+    const filePath = join(ENV.FRONTEND_PATH, c.req.path);
+
+    try {
+        const file = Bun.file(filePath);
+        if (await file.exists()) {
+            const mimeType = getMimeType(filePath);
+            return c.body(await file.text(), 200, {
+                'Content-type': mimeType
+            });
+        }
+    } catch (error) {
+
+    }
+
+    // SPA fallback - serve index.html for all unmatched routes
+    try {
+        const indexPath = join(ENV.FRONTEND_PATH, 'index.html');
+        const content = await Bun.file(indexPath).text();
+        return c.html(content);
+    } catch (error) {
+        return c.text('index.html not found', 500)
+    }
+})
 
 // 404 handler
 app.notFound((c) => {
@@ -82,14 +146,14 @@ const server = Bun.serve({
     fetch: app.fetch,
     port: ENV.PORT,
     hostname: ENV.HOST,
-    tls: {
-        key: fs.readFileSync(ENV.PEM_KEY),
-        cert: fs.readFileSync(ENV.PEM_CERT)
-    },
+    // tls: {
+    //     key: fs.readFileSync(ENV.PEM_KEY),
+    //     cert: fs.readFileSync(ENV.PEM_CERT)
+    // },
     idleTimeout: 0
 });
 
-console.log(`✓ Server running at https://${ENV.HOST}:${ENV.PORT}`);
+console.log(`✓ Server running at http://${ENV.HOST}:${ENV.PORT}`);
 console.log(`✓ Max SSE clients: ${ENV.MAX_SSE_CLIENTS}`);
 console.log(`✓ Database: ${ENV.DATABASE_PATH}`);
 console.log("=".repeat(60));

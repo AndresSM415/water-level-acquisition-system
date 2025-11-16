@@ -1,5 +1,5 @@
-import {connectionState, lastReadingTime, connectionDate, clientId} from "@/stores/connection";
-import { addReading } from "@/stores/readings";
+import {connectionState, lastReadingTime, connectionDate, clientId} from "@/stores/connection.ts";
+import { addReading } from "@/stores/readings.ts";
 import type { DashboardReading } from "@wlas/shared";
 
 let eventSource: EventSource | null = null;

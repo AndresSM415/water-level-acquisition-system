@@ -14,6 +14,9 @@ export function createExportRoute(sensorService: SensorService, sseManager: SSEM
         try {
             const clientId = c.req.query("clientId");
             const decimation = parseInt(c.req.query("decimation") || "1") as DecimationInterval;
+            const customStartTime = c.req.query("startTime") ? parseInt(c.req.query("startTime") as string) / 1000 : null;
+            console.log(c.req.query("startTime"))
+
             if(clientId === undefined || !sseManager.hasClient(clientId)) {
                 return c.json({
                     error: "Missing or incorrect clientId",
@@ -26,7 +29,8 @@ export function createExportRoute(sensorService: SensorService, sseManager: SSEM
                     code: "INVALID_PATH"
                 }, 400);
             }
-            const startTime = sseManager.getConnectionTime(clientId);
+
+            const startTime = customStartTime ?? sseManager.getConnectionTime(clientId);
             if (!startTime) {
                 return c.json({
                     error: "Client no connected or session expired.",
@@ -35,8 +39,13 @@ export function createExportRoute(sensorService: SensorService, sseManager: SSEM
             }
             const endTime = Date.now() / 1000;
             const format = "csv" as ExportFormat;
-            const limit = 3600;
+            const limit = 3600 * 12;
 
+            if (startTime > endTime)
+                return c.json({
+                    error: "Start time cannot be in the future",
+                    code: "INVALID_TIME_RANGE"
+                }, 400);
             // Export data via service
             const data = await sensorService.exportData(
                 startTime,
@@ -55,7 +64,7 @@ export function createExportRoute(sensorService: SensorService, sseManager: SSEM
 
             return c.text(data, 200, {
                 "Content-Type": "text/csv",
-                "Content-Disposition": `attachment; filename="tanques-interconectados-${formatTimestamp(startTime)}-duracion-${formatTime(endTime-startTime)}.csv"`,
+                "Content-Disposition": `attachment; filename="tanques-interconectados_${formatTimestamp(startTime)}_duracion-${formatTime(endTime-startTime)}_periodo-${decimation}s.csv"`,
                 "Access-Control-Allow-Origin": "*",
                 "Access-Control-Expose-Headers": "Content-Disposition"
             });

@@ -3,7 +3,7 @@ set -e
 
 PI_USER="dr_control"
 PI_HOST="192.168.1.6"
-PI_PATH="/home/${PI_USER}/dr_control_project"
+PI_PATH="/home/${PI_USER}/water-level-acquisition-system"
 
 
 
@@ -17,10 +17,10 @@ rsync -avz --delete \
 	--exclude "README.md" \
 	--exclude ".idea/" \
 	--exclude "__pycache__/" \
-	--exclude "util/" \
 	--exclude "node_modules/" \
 	--exclude "CHANGELOG.md" \
 	--exclude ".env.template" \
+	--exclude "dist/" \
 	. ${PI_USER}@${PI_HOST}:${PI_PATH}
 
 echo "Running project remotely..."

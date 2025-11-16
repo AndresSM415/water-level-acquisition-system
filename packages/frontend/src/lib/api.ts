@@ -1,20 +1,24 @@
-import { startExport, completeExport, failExport } from "@/stores/export";
+import { startExport, completeExport, failExport } from "@/stores/export.ts";
 import { config } from "@/lib/config.ts";
 
 export async function downloadData(
     clientId: string,
     decimation: number,
+    startTime?: number | null,
     apiUrl: string = config.apiUrl
 ): Promise<void> {
     startExport();
 
     try {
-        console.log('[API] Requesting export:', {clientId, decimation});
+        console.log('[API] Requesting export:', {clientId, decimation, startDate: startTime});
 
-        const response = await fetch(`${apiUrl}/api/export?clientId=${clientId}&decimation=${decimation}`,
-            {
-            method: 'GET'
+        const params = new URLSearchParams({
+            clientId,
+            decimation: String(decimation),
+            ...(startTime && {startTime: String(startTime) })
         });
+
+        const response = await fetch(`${apiUrl}/api/export?${params}`, {method: 'GET'});
 
         if (!response.ok) {
             const errorBody = await response.text();
@@ -24,13 +28,11 @@ export async function downloadData(
         const blob = await response.blob();
         const contentDisposition = response.headers.get('Content-Disposition');
         let filename = 'sensor-data.csv';
-        console.log(contentDisposition)
+
         if (contentDisposition){
             const matches = contentDisposition.match(/filename="(.+?)"/);
-            console.log("vv")
             if (matches && matches[1]) {
                 filename = matches[1]
-                console.log("aa")
             }
         }
 

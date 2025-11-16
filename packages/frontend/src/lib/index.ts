@@ -1,6 +1,6 @@
-export { connectToSSE, disconnectSSE, isSSEConnected, forceReconnect } from './sse';
+export { connectToSSE, disconnectSSE, isSSEConnected, forceReconnect } from './sse.ts';
 
-export { downloadData, getStats } from './api';
+export { downloadData, getStats } from './api.ts';
 
 export {
     formatNumber,
@@ -11,8 +11,8 @@ export {
     clamp,
     getSensorInfo,
     isValidNumber
-} from './utils'
+} from '../lib/utils.ts'
 
 export {
     config
-} from './config'
+} from './config.ts'

@@ -84,7 +84,22 @@ export class SensorService {
      * Convert samples to cSV format.
      */
     private samplesToCSV(samples: SensorSample[]): string {
-        return Papa.unparse(samples);
+        if (!samples || samples.length === 0) return Papa.unparse([]);
+
+        const firstTimestamp = samples[0]!.timestamp;
+
+        const normalizedSamples = samples.map(sample => {
+            const { id, ...sampleWithNoId } = sample
+            const scaleVoltage = (voltage: number) => this.toFixed((voltage/3.3)*5, 3);
+            return {
+                ...sampleWithNoId,
+                tank1Voltage: scaleVoltage(sample.tank1Voltage),
+                tank2Voltage: scaleVoltage(sample.tank2Voltage),
+                tank3Voltage: scaleVoltage(sample.tank3Voltage),
+                timestamp: sampleWithNoId.timestamp - firstTimestamp
+            }
+        });
+        return Papa.unparse(normalizedSamples);
     }
 
     /**
