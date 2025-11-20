@@ -3,12 +3,25 @@
 ## [Unreleased]
 
 ### Todo
-- Calibrate ADS readings.
-- Add an ADS connection recovery mechanism as loose cables cuts communication.
-- Fix PWM max/min level reading. 
-- Clean up exiting code exceptions.
-- Add more aggresive pragma optimizations on db (busy_timeout = 5000, synchronous = OFF, cache_size = -2000000, temp_store = memory)
+- Sampler
+  - Calibrate ADS readings.
+  - Add an ADS connection recovery mechanism as loose cables cuts communication.
+  - Fix PWM max/min level reading. 
+  - Clean up exiting code exceptions.
+  - Add more aggresive pragma optimizations on db (busy_timeout = 5000, synchronous = OFF, cache_size = -2000000, temp_store = memory)
+- Add time drift compensation between server and client for export request
+### Added
+- Svelte Frontend:
+  - Static page with SSE connection
+  - Export initial Time habilitated
+- Hotspot with RaspAp
+- Redirection with Hostapd
+- Installation script
+### Modified
+- Bun Server:
+  -Modified export API to enhanced file naming.
 
+## [7067c7d]
 ### Added
 - bun server:
   - Export csv
@@ -23,7 +36,7 @@
 ### Modified
 - sampler db query writing (it was not working).
 - added more env variables.
-- q
+
 
 ## [f2ee4e9]
 - ADS readings lasts 195ms (16 sps so 62.5ms per channel. If less period desired then this parameter needs to be increased.)
