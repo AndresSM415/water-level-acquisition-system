@@ -12,6 +12,7 @@ doc/project-proposal/output/*
 # Bun
 node_modules/
 package-lock.json
+dist/
 
 # Python
 __pycache__/
@@ -31,3 +32,6 @@ __pycache__/
 .idea/
 *.swp
 *.swo
+
+# Other
+*.pem

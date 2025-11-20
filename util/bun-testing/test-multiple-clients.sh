@@ -10,7 +10,7 @@ echo "Opening $NUM_CLIENTS SSE clients..."
 # Start clients and track PIDs
 for i in $(seq 1 $NUM_CLIENTS); do
     echo "Starting client $i..."
-    curl -N http://$HOST:3000/api/stream > /dev/null 2>&1 &
+    curl -N -k http://$HOST:5173 > /dev/null 2>&1 &
     PIDS+=($!)
 done
 

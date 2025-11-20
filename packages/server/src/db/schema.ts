@@ -3,9 +3,10 @@
  * Matches the Python sampler's sensor_samples table structure.
  */
 import {sqliteTable, integer, real, index } from "drizzle-orm/sqlite-core";
+import {ENV} from "../lib";
 
 export const sensorSamples = sqliteTable(
-    process.env.SAMPLE_TABLE || "sensor_samples",
+    ENV.SAMPLE_TABLE,
     {
         id: integer("id").primaryKey({autoIncrement: true}),
         timestamp: real("timestamp").notNull(),
