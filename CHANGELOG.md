@@ -3,13 +3,42 @@
 ## [Unreleased]
 
 ### Todo
-- Calibrate ADS readings.
-- Add an ADS connection recovery mechanism as loose cables cuts communication.
-- Fix PWM max/min level reading. 
-- Bun server
-- Clean up exiting code exceptions.
-
+- Sampler
+  - Calibrate ADS readings.
+  - Add an ADS connection recovery mechanism as loose cables cuts communication.
+  - Fix PWM max/min level reading. 
+  - Clean up exiting code exceptions.
+  - Add more aggresive pragma optimizations on db (busy_timeout = 5000, synchronous = OFF, cache_size = -2000000, temp_store = memory)
+- Add time drift compensation between server and client for export request
 ### Added
+- Svelte Frontend:
+  - Static page with SSE connection
+  - Export initial Time habilitated
+- Hotspot with RaspAp
+- Redirection with Hostapd
+- Installation script
+### Modified
+- Bun Server:
+  -Modified export API to enhanced file naming.
+
+## [7067c7d]
+### Added
+- bun server:
+  - Export csv
+  - Dashboard streaming connection
+  - Server stats
+  - Driizle orm
+  - Hono
+- Testing scripts:
+  - dummmy bun sampler.
+  - multiple stream clients.
+
+### Modified
+- sampler db query writing (it was not working).
+- added more env variables.
+
+
+## [f2ee4e9]
 - ADS readings lasts 195ms (16 sps so 62.5ms per channel. If less period desired then this parameter needs to be increased.)
 - DB writings lasts 5ms (with peaks of 17ms).
 - Total sampling minimum period: 200ms -> 5Hz. Still will work at 1 Hz as it consumes more cpu.

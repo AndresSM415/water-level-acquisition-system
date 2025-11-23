@@ -1,0 +1,29 @@
+{
+  "name": "@wlas/server",
+  "version": "0.0.1",
+  "type": "module",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "private": true,
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build src/index.ts --outfile dist/server.js --target bun",
+    "start": "bun dist/server"
+  },
+  "dependencies": {
+    "@wlas/shared": "workspace:*",
+    "drizzle-orm": "^0.44.7",
+    "hono": "^4.10.3",
+    "papaparse": "^5.5.3"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/papaparse": "^5.3.16",
+    "@wlas/shared": "workspace:*",
+    "dotenv": "^17.2.3",
+    "drizzle-kit": "^0.31.5"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

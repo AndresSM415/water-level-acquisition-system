@@ -96,12 +96,8 @@ class Database:
         Insert a single sample into the database.
         :param sample: Dictionary with sample data from SampleData.to_dict().
         """
-        # async with self.async_session() as session:
-        #     sample = SensorSample(**sample)
-        #     session.add(sample)
-        #     await session.commit()
-        async with self.async_session.begin():  # begin() gives one tx
-            async with self.async_session() as s:
+        async with self.async_session() as s:
+            async with s.begin():  # begin() gives one tx
                 s.add(SensorSample(**sample))
 
 

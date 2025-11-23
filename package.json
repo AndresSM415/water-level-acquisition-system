@@ -1,19 +1,27 @@
 {
-  "name": "water-level-acquisition-system",
-  "module": "index.ts",
-  "type": "module",
+  "name": "wlas",
+  "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun run concurrently \"bun run dev:server\" \"bun run dev:frontend\"",
+    "dev:server": "bun run --cwd packages/server dev",
+    "dev:frontend": "bun run --cwd packages/frontend dev",
+    "build": "bun run concurrently \"bun run build:frontend\" \"bun run build:server\"",
+    "build:frontend": "bun run --cwd packages/frontend build",
+    "build:server": "bun run --cwd packages/server build",
+    "start": "bun packages/server/dist/server.js",
+    "start:dummy-sampler": "bun run util/bun-testing/dummy-sampler.ts"
+  },
   "devDependencies": {
-    "@types/bun": "latest",
-    "@types/i2c-bus": "^5.1.2",
-    "@types/onoff": "^4.1.0",
-    "@types/pigpio": "^3.1.0"
+    "@types/bun": "^1.3.1",
+    "bun-types": "^1.3.1",
+    "concurrently": "^9.2.1",
+    "dotenv-cli": "^10.0.0"
   },
   "peerDependencies": {
     "typescript": "^5"
-  },
-  "dependencies": {
-    "ads1x15": "^1.2.0",
-    "i2c-bus": "^5.2.3"
   }
 }
