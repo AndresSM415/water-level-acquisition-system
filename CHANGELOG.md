@@ -6,20 +6,28 @@
 - Sampler
   - Calibrate ADS readings.
   - Add an ADS connection recovery mechanism as loose cables cuts communication.
-  - Fix PWM max/min level reading. 
-  - Clean up exiting code exceptions.
-  - Add more aggresive pragma optimizations on db (busy_timeout = 5000, synchronous = OFF, cache_size = -2000000, temp_store = memory)
 - Add time drift compensation between server and client for export request
+
+### Added:
+- More optimizations on DB.
+- ReadMe
+### Fixed:
+- PWM max/min level reading.
+- Graceful sampler shutdown.
+- Installation script creates env from scratch, Hotspot configuration so no manual post configuration needed (Open Hotspot, SSID: Tanques Interconectados, port redirection to 80, removed lighttpd captive portal).
+
+## [11c0d44]
 ### Added
-- Svelte Frontend:
+- Frontend:
   - Static page with SSE connection
   - Export initial Time habilitated
 - Hotspot with RaspAp
 - Redirection with Hostapd
 - Installation script
 ### Modified
-- Bun Server:
-  -Modified export API to enhanced file naming.
+- Server:
+  - Modified export API to enhanced file naming.
+  - Env loading in a single configuration module
 
 ## [7067c7d]
 ### Added

@@ -10,7 +10,7 @@ export class SensorService {
     constructor(private repository: SensorRepository) {}
 
     private readonly VOLTAGE_MIN = 0;
-    private readonly VOLTAGE_MAX = 3.3;
+    private readonly VOLTAGE_MAX = 5.0;
 
     /**
      * Convert voltage to percentage (0-100%).
@@ -90,13 +90,18 @@ export class SensorService {
 
         const normalizedSamples = samples.map(sample => {
             const { id, ...sampleWithNoId } = sample
-            const scaleVoltage = (voltage: number) => this.toFixed((voltage/3.3)*5, 3);
             return {
                 ...sampleWithNoId,
-                tank1Voltage: scaleVoltage(sample.tank1Voltage),
-                tank2Voltage: scaleVoltage(sample.tank2Voltage),
-                tank3Voltage: scaleVoltage(sample.tank3Voltage),
-                timestamp: sampleWithNoId.timestamp - firstTimestamp
+                tank1Voltage: this.toFixed(sample.tank1Voltage, 3),
+                tank2Voltage: this.toFixed(sample.tank2Voltage, 3),
+                tank3Voltage: this.toFixed(sample.tank3Voltage, 3),
+                flow1Lps: this.toFixed(sample.flow1Lps, 4),
+                flow1Pulses: sample.flow1Pulses,
+                flow2Lps: this.toFixed(sample.flow2Lps, 4),
+                flow2Pulses: sample.flow2Pulses,
+                hose1DutyCycle: this.toFixed(sample.hose1DutyCycle, 2),
+                hose2DutyCycle: this.toFixed(sample.hose2DutyCycle, 2),
+                timestamp: Math.round(sampleWithNoId.timestamp - firstTimestamp)
             }
         });
         return Papa.unparse(normalizedSamples);

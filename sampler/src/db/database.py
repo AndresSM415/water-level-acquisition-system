@@ -75,7 +75,10 @@ class Database:
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
             await conn.execute(text("PRAGMA journal_mode=WAL"))
-            await conn.execute(text("PRAGMA synchronous=NORMAL"))
+            await conn.execute(text("PRAGMA synchronous=OFF"))
+            await conn.execute(text("PRAGMA busy_timeout=5000"))
+            await conn.execute(text("PRAGMA cache_size=-2000000"))
+            await conn.execute(text("PRAGMA temp_store=MEMORY"))
             log.info(f"Database initialized at {self.db_url}")
 
     async def close(self) -> None:

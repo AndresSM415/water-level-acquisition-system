@@ -33,5 +33,12 @@ __pycache__/
 *.swp
 *.swo
 
+# KiCad
+hardware/pcb/**-backups/
+hardware/pcb/*.kicad_pcb-bak
+hardware/pcb/*.kicad_sch-bak
+hardware/pcb/*~
+hardware/pcb/*.pro~
+
 # Other
 *.pem

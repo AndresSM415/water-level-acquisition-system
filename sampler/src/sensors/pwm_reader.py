@@ -35,6 +35,7 @@ class PWMReading:
     """Data class for PWM reading information"""
     duty_cycle: float  # Percentage (0-100)
     frequency: float  # Hz
+    is_valid: bool # Helper for Signal threshold handling
 
 
 class PWMReader:
@@ -98,7 +99,8 @@ class PWMReader:
         # Current reading
         self.current_reading = PWMReading(
             duty_cycle=0.0,
-            frequency=0.0
+            frequency=0.0,
+            is_valid=False
         )
 
         # Statistics
@@ -215,7 +217,8 @@ class PWMReader:
 
                     self.current_reading = PWMReading(
                         duty_cycle=duty_cycle,
-                        frequency=frequency
+                        frequency=frequency,
+                        is_valid=True
                     )
 
                     self.valid_readings += 1
@@ -262,31 +265,18 @@ class PWMReader:
         """
         self._invalid_reading_callbacks.append(callback)
 
-    def get_current_reading(self) -> PWMReading:
-        """
-        Get the most recent PWM reading.
-
-        Returns:
-            Copy of current PWMReading
-
-        Raises:
-            RuntimeError: If reader is not running
-        """
-        if not self.is_running:
-            raise RuntimeError("PWM Reader is not running. Call start() first")
-
-        return PWMReading(
-            duty_cycle=self.current_reading.duty_cycle,
-            frequency=self.current_reading.frequency
-        )
-
-    def get_duty_cycle(self) -> float:
+    @property
+    def duty_cycle(self) -> float:
         """Get current duty cycle (convenience method)."""
-        return self.get_current_reading().duty_cycle
+        if self.current_reading.is_valid:
+            self.current_reading.is_valid = False
+            return self.current_reading.duty_cycle
+        return 100 if self.current_reading.duty_cycle > 50 else 0
+
 
     def get_frequency(self) -> float:
         """Get current frequency (convenience method)."""
-        return self.get_current_reading().frequency
+        return self.current_reading.frequency
 
     def get_statistics(self) -> Dict[str, Any]:
         """
