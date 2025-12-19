@@ -61,7 +61,7 @@ export function createStreamRoute(
                     timestamp: Date.now(),
                 } as SSEMessage)
             });
-
+            console.log(`Client ${clientId} connected.`)
             // Start sending updates every 1 second
             interval = setInterval(async () => {
                 try {

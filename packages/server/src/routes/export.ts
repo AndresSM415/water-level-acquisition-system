@@ -14,8 +14,7 @@ export function createExportRoute(sensorService: SensorService, sseManager: SSEM
         try {
             const clientId = c.req.query("clientId");
             const decimation = parseInt(c.req.query("decimation") || "1") as DecimationInterval;
-            const customStartTime = c.req.query("startTime") ? parseInt(c.req.query("startTime") as string) / 1000 : null;
-            console.log(c.req.query("startTime"))
+            const offsetStartTime = parseInt(c.req.query("offsetStartTime") as string) / 1000;
 
             if(clientId === undefined || !sseManager.hasClient(clientId)) {
                 return c.json({
@@ -30,22 +29,18 @@ export function createExportRoute(sensorService: SensorService, sseManager: SSEM
                 }, 400);
             }
 
-            const startTime = customStartTime ?? sseManager.getConnectionTime(clientId);
-            if (!startTime) {
+            if (offsetStartTime === undefined || offsetStartTime <= 0) {
                 return c.json({
-                    error: "Client no connected or session expired.",
-                    code: "INVALID_CLIENT"
+                    error: "Incorrect offset start time",
+                    code: "INVALID_PATH"
                 }, 400)
             }
             const endTime = Date.now() / 1000;
+            const startTime = endTime - offsetStartTime
+
             const format = "csv" as ExportFormat;
             const limit = 3600 * 12;
 
-            if (startTime > endTime)
-                return c.json({
-                    error: "Start time cannot be in the future",
-                    code: "INVALID_TIME_RANGE"
-                }, 400);
             // Export data via service
             const data = await sensorService.exportData(
                 startTime,

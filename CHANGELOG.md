@@ -8,6 +8,11 @@
   - Add an ADS connection recovery mechanism as loose cables cuts communication.
 - Add time drift compensation between server and client for export request
 
+### Fixed:
+- Time drift compensation, export api now takes offset time in milliseconds relative to the current system date.
+- DB cleanup each time the sampler is started.
+
+## [113a298]
 ### Added:
 - More optimizations on DB.
 - ReadMe
