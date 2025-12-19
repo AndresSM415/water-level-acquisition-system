@@ -63,6 +63,8 @@ class Sampler:
 
         log.info("Initializing sensors...")
         try:
+            self.R1 = 2550
+            self.R2 = 4990
             self.tank = ADS1115()
             self.flow_meters: Dict[int, YFS401] = {
                 0: YFS401(10),
@@ -91,9 +93,9 @@ class Sampler:
         """
         return SampleData(
             timestamp=time(),
-            tank1_voltage= self.tank.voltage(0),
-            tank2_voltage= self.tank.voltage(1),
-            tank3_voltage= self.tank.voltage(2),
+            tank1_voltage= self.tank.voltage(0) * (self.R1 + self.R2)/self.R2,
+            tank2_voltage= self.tank.voltage(1) * (self.R1 + self.R2)/self.R2,
+            tank3_voltage= self.tank.voltage(2) * (self.R1 + self.R2)/self.R2,
             flow1_lps= self.flow_meters[0].current_reading.liters_per_second,
             flow1_pulses= self.flow_meters[0].current_reading.pulses,
             flow2_lps= self.flow_meters[1].current_reading.liters_per_second,
@@ -131,12 +133,12 @@ class Sampler:
             while self._is_running:
                 await self._tick_event.wait()
 
-                t1 = time()
+                # t1 = time()
                 sample = self._collect_sample()
-                t2 = time()
+                # t2 = time()
                 await self._insert_to_db(sample)
-                t3 = time()
-                print(f"sensors: {int((t2-t1)*1000)}, db: {int((t3-t2)*1000)}, total: {int((t3-t1)*1000)}")
+                # t3 = time()
+                # print(f"sensors: {int((t2-t1)*1000)}, db: {int((t3-t2)*1000)}, total: {int((t3-t1)*1000)}")
                 self._tick_event.clear()
         except asyncio.CancelledError:
             log.info("Main loop cancelled.")
@@ -164,7 +166,7 @@ class Sampler:
 
         try:
             await asyncio.gather(*self._tasks, return_exceptions=True)
-        except KeyboardInterrupt:
+        except KeyboardInterrupt or asyncio.CancelledError:
             log.warning("\n\nShutdown requested...")
         finally:
             await self._cleanup()
@@ -216,5 +218,8 @@ if __name__ == "__main__":
     if args.cleanup:
         asyncio.run(cleanup_old_data())
     else:
-        sampler = Sampler()
-        asyncio.run(sampler.run())
+        try:
+            sampler = Sampler()
+            asyncio.run(sampler.run())
+        except KeyboardInterrupt:
+            pass

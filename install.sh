@@ -2,7 +2,7 @@
 
 ##############################################################################
 # Water Level Acquisition System (WLAS) Installation Script
-# For Raspberry Pi Zero 2 / 3
+# For Raspberry Pi
 ##############################################################################
 
 set -euo pipefail
@@ -55,7 +55,7 @@ log_section() {
 
 check_root() {
     if [ "$EUID" -ne 0 ]; then
-        log_error "This script must be run with sudo"
+        log_error "This script must be run with sudo. i.e. sudo ./install.sh"
         exit 1
     fi
 }
@@ -65,36 +65,125 @@ check_prerequisites() {
 
     # Check OS
     if ! grep -qi "raspberry\|debian\|ubuntu" /etc/os-release; then
-        log_error "This script is designed for Raspberry Pi OS (Debian-based)"
+        log_error "This script is designed for Raspberry Pi OS (Debian-based)."
         exit 1
     fi
-    # log_success "Compatible OS detected"
 
     # Check disk space (at least 2GB)
-    available_space=$(df "$PROJECT_DIR" | awk 'NR==2 {print $4}')
+    available_space=$(df "$PROJECT_DIR" | awk 'NR==8 {print $4}')
     if [ "$available_space" -lt 2097152 ]; then
-        log_error "Insufficient disk space (need 2GB, have $(( available_space / 1048576 ))GB)"
+        log_error "Insufficient disk space (need 8GB, have $(( available_space / 1048576 ))GB)."
         exit 1
     fi
-    # log_success "Sufficient disk space available"
-
-     # Check .env or .env.template file
-    if [ ! -f "$PROJECT_DIR/.env" ] && [ ! -f "$PROJECT_DIR/.env.template" ]; then
-        log_error "Neither .env nor .env.template found in $PROJECT_DIR"
-        log_info "Please ensure at least .env.template exists"
-        exit 1
-    fi
-#        log_success ".env file found"
 }
 
-load_env() {
-    log_section "Loading Environment Variables"
+setup_env_file() {
+    log_section "Environment File Configuration"
 
-    set -a
-    source "$PROJECT_DIR/.env"
-    set +a
+    # Variables from template (use as-is)
+    DEBUG="true"
+    SAMPLE_INTERVAL="1"
+    AUTO_CLEANUP_ENABLED="true"
+    HOST="0.0.0.0"
+    SERVER_IP="10.3.141.1"
 
-    log_success "Environment variables loaded"
+    # Ask user for customizable variables
+    echo -e "${BLUE}press Enter to use defaults:${NC}"
+    echo ""
+
+    read -rp "Database path (default: /var/lib/wlas/): " db_path
+    DB_PATH="${db_path:-"/var/lib/wlas/"}"
+
+    read -rp "Log directory (default: /var/log/wlas/): " log_dir
+    LOG_DIR="${log_dir:-"/var/log/wlas/"}"
+
+    read -rp "Data retention days (default: 30): " retention_days
+    DATA_RETENTION_DAYS="${retention_days:-30}"
+
+    read -rp "Database file (default: samples.sqlite): " db_file
+    DB_FILE="${db_file:-"samples.sqlite"}"
+
+    read -rp "Sample table name (default: sensor_samples): " sample_table
+    SAMPLE_TABLE="${sample_table:-"sensor_samples"}"
+
+    read -rp "Log file name (default: sampler.log): " log_file
+    LOG_FILE="${log_file:-"sampler.log"}"
+
+    read -rp "Maximum Concurrent clients (default: 19): " log_file
+    MAX_SSE_CLIENTS="${log_file:-19}"
+
+    read -rp "Server port (default: 3000): " server_port
+    SERVER_PORT="${server_port:-3000}"
+
+    VITE_API_URL="http://${SERVER_IP}:${SERVER_PORT}"
+
+    ROOT_PATH="$PROJECT_DIR"
+
+    # Create/update .env file
+    log_info "Writing configuration to .env..."
+
+    cat > "$PROJECT_DIR/.env" << EOF
+# Sensor Data Acquisition System Configuration
+#
+# =============================================================================
+# PATHS
+# =============================================================================
+# Project root directory
+ROOT_PATH=$ROOT_PATH
+# Database location
+DB_PATH=$DB_PATH
+# Log directory
+LOG_DIR=$LOG_DIR
+
+# =============================================================================
+# SAMPLER CONFIGURATION (Python)
+# =============================================================================
+# Sample interval in seconds (minimum 0.5)
+SAMPLE_INTERVAL=$SAMPLE_INTERVAL
+
+# Enable debug output
+DEBUG=$DEBUG
+
+# =============================================================================
+# DATA RETENTION
+# =============================================================================
+# Days to keep data before cleanup
+DATA_RETENTION_DAYS=$DATA_RETENTION_DAYS
+
+# Enable automatic cleanup
+AUTO_CLEANUP_ENABLED=$AUTO_CLEANUP_ENABLED
+
+# =============================================================================
+# DATABASE
+# =============================================================================
+DB_FILE=$DB_FILE
+SAMPLE_TABLE=$SAMPLE_TABLE
+
+# =============================================================================
+# LOG
+# =============================================================================
+LOG_FILE=$LOG_FILE
+
+# =============================================================================
+# WEB SERVER
+# =============================================================================
+# Server port
+SERVER_PORT=$SERVER_PORT
+
+# Server host (0.0.0.0 for external access, 127.0.0.1 for local only)
+HOST=$HOST
+
+# Connection Limits
+MAX_SSE_CLIENTS=$MAX_SSE_CLIENTS
+
+# =============================================================================
+# FRONTEND
+# =============================================================================
+# Frontend url
+VITE_API_URL=$VITE_API_URL
+EOF
+
+    log_success ".env file configured successfully"
 }
 
 setup_logging() {
@@ -104,10 +193,10 @@ setup_logging() {
     log_info "Installation logs: $LOG_DIR/install.log"
 }
 
+
 ##############################################################################
 # INSTALLATION MODULES (PLACEHOLDER)
 ##############################################################################
-
 install_dependencies() {
     log_section "Installing System Dependencies"
 
@@ -181,169 +270,6 @@ install_dependencies() {
     fi
 
     log_success "All system dependencies installed"
-}
-
-setup_env_file() {
-    log_section "Environment File Configuration"
-
-    local env_template="$PROJECT_DIR/.env.template"
-    local env_file="$PROJECT_DIR/.env"
-
-    # Check if .env.template exists
-    if [ ! -f "$env_template" ]; then
-        log_error ".env.template not found at $env_template"
-        exit 1
-    fi
-#    log_success ".env.template found"
-
-    # If .env doesn't exist, copy from template
-    if [ ! -f "$env_file" ]; then
-        log_info "Creating .env from template..."
-        cp "$env_template" "$env_file"
-    fi
-
-    echo ""
-    log_info "Configuring environment variables..."
-    echo ""
-
-    # Variables from template (use as-is)
-    local DEBUG
-    local SAMPLE_INTERVAL
-    local AUTO_CLEANUP_ENABLED
-    local HOST
-    DEBUG=$(grep "^DEBUG=" "$env_template" | cut -d '=' -f2)
-    SAMPLE_INTERVAL=$(grep "^SAMPLE_INTERVAL=" "$env_template" | cut -d '=' -f2)
-    AUTO_CLEANUP_ENABLED=$(grep "^AUTO_CLEANUP_ENABLED=" "$env_template" | cut -d '=' -f2)
-    HOST=$(grep "^HOST=" "$env_template" | cut -d '=' -f2)
-
-    # Variables with defaults (use current .env value as default)
-    local current_db_path
-    local current_log_dir
-    local current_retention
-    local current_db_file
-    local current_table
-    local current_log_file
-    local current_max_clients
-    current_db_path=$(grep "^DB_PATH=" "$env_file" | cut -d '=' -f2 || echo "/var/lib/wlas/")
-    current_log_dir=$(grep "^LOG_DIR=" "$env_file" | cut -d '=' -f2 || echo "/var/log/wlas/")
-    current_retention=$(grep "^DATA_RETENTION_DAYS=" "$env_file" | cut -d '=' -f2 || echo "30")
-    current_db_file=$(grep "^DB_FILE=" "$env_file" | cut -d '=' -f2 || echo "samples.sqlite")
-    current_table=$(grep "^SAMPLE_TABLE=" "$env_file" | cut -d '=' -f2 || echo "sensor_samples")
-    current_log_file=$(grep "^LOG_FILE=" "$env_file" | cut -d '=' -f2 || echo "sampler.log")
-    current_max_clients=$(grep "^MAX_SSE_CLIENTS=" "$env_file" | cut -d '=' -f2 || echo "60")
-
-    # Ask user for customizable variables
-    echo -e "${BLUE}Optional Configuration (press Enter to use defaults):${NC}"
-    echo ""
-
-    read -rp "Database path (default: $current_db_path): " db_path
-    DB_PATH="${db_path:-$current_db_path}"
-
-    read -rp "Log directory (default: $current_log_dir): " log_dir
-    LOG_DIR="${log_dir:-$current_log_dir}"
-
-    read -rp "Data retention days (default: $current_retention): " retention_days
-    DATA_RETENTION_DAYS="${retention_days:-$current_retention}"
-
-    read -rp "Database file (default: $current_db_file): " db_file
-    DB_FILE="${db_file:-$current_db_file}"
-
-    read -rp "Sample table name (default: $current_table): " sample_table
-    SAMPLE_TABLE="${sample_table:-$current_table}"
-
-    read -rp "Log file name (default: $current_log_file): " log_file
-    LOG_FILE="${log_file:-$current_log_file}"
-
-    read -rp "Maximum Concurrent clients (default: $current_max_clients): " log_file
-    MAX_SSE_CLIENTS="${log_file:-$current_max_clients}"
-
-    echo ""
-    echo -e "${BLUE}Required Configuration:${NC}"
-    echo ""
-
-    # Ask for SERVER_PORT
-    read -rp "Server port (default: 3000): " server_port
-    SERVER_PORT="${server_port:-3000}"
-
-    # Ask for IP and create VITE_API_URL
-    read -rp "Server IP address (e.g., 10.3.141.1): " server_ip
-    SERVER_IP="${server_ip:-10.3.141.1}"
-    VITE_API_URL="http://${SERVER_IP}:${SERVER_PORT}"
-
-    # ROOT_PATH is automatically set
-    ROOT_PATH="$PROJECT_DIR"
-
-    # Create/update .env file
-    log_info "Writing configuration to .env..."
-    cat > "$env_file" << EOF
-# Sensor Data Acquisition System Configuration
-#
-# =============================================================================
-# PATHS
-# =============================================================================
-# Project root directory
-ROOT_PATH=$ROOT_PATH
-# Database location
-DB_PATH=$DB_PATH
-# Log directory
-LOG_DIR=$LOG_DIR
-
-# =============================================================================
-# SAMPLER CONFIGURATION (Python)
-# =============================================================================
-# Sample interval in seconds (minimum 0.5)
-SAMPLE_INTERVAL=$SAMPLE_INTERVAL
-
-# Enable debug output
-DEBUG=$DEBUG
-
-# =============================================================================
-# DATA RETENTION
-# =============================================================================
-# Days to keep data before cleanup
-DATA_RETENTION_DAYS=$DATA_RETENTION_DAYS
-
-# Enable automatic cleanup
-AUTO_CLEANUP_ENABLED=$AUTO_CLEANUP_ENABLED
-
-# =============================================================================
-# DATABASE
-# =============================================================================
-DB_FILE=$DB_FILE
-SAMPLE_TABLE=$SAMPLE_TABLE
-
-# =============================================================================
-# LOG
-# =============================================================================
-LOG_FILE=$LOG_FILE
-
-# =============================================================================
-# WEB SERVER
-# =============================================================================
-# Server port
-SERVER_PORT=$SERVER_PORT
-
-# Server host (0.0.0.0 for external access, 127.0.0.1 for local only)
-HOST=$HOST
-
-# Connection Limits
-MAX_SSE_CLIENTS=$MAX_SSE_CLIENTS
-
-# =============================================================================
-# FRONTEND
-# =============================================================================
-# Frontend url
-VITE_API_URL=$VITE_API_URL
-EOF
-
-    log_success ".env file configured successfully"
-    echo ""
-    log_info "Configuration Summary:"
-    log_info "  ROOT_PATH: $ROOT_PATH"
-    log_info "  DB_PATH: $DB_PATH"
-    log_info "  LOG_DIR: $LOG_DIR"
-    log_info "  SERVER_PORT: $SERVER_PORT"
-    log_info "  VITE_API_URL: $VITE_API_URL"
 }
 
 build_project() {
@@ -468,9 +394,9 @@ EOF
     # Enable services
     log_info "Enabling services..."
     systemctl daemon-reload
-    systemctl enable pigpiod
-    systemctl enable wlas-server.service
+    systemctl enable pigpiod.service
     systemctl enable wlas-sampler.service
+    systemctl enable wlas-server.service
 
     # Start services
     log_info "Starting services..."
@@ -495,7 +421,9 @@ setup_database_cleanup() {
 
   # Create cron job to run cleanup daily at 2 AM
   cat > /tmp/wlas_cron << EOF
-0 2 * * * /home/$INSTALL_USER/.local/bin/uv run -m src.sampler --cleanup >> $LOG_DIR/cleanup.log 2>&1
+0 2 * * * /home/$INSTALL_USER/.local/bin/uv run \
+  --directory $PROJECT_DIR/sampler \
+  -m src.sampler --cleanup >> /var/log/wlas/cleanup.log 2>&1
 EOF
 
     # Install cron job for the user
@@ -506,123 +434,9 @@ EOF
 
 }
 
-setup_portal_redirect() {
-    log_section "Setting Up Portal Redirect (Nodogsplash)"
-
-    # Install dependencies
-    log_info "Installing nodogsplash dependencies..."
-    apt-get install -y git \
-      build-essential \
-      libmicrohttpd-dev \
-      libssl-dev \
-      iptables \
-      netfilter-persistent \
-      iptables-persistent \
-      debhelper \
-      devscripts \
-      libjson-c-dev \
-      zlib1g-dev
-
-    # Build and install nodogsplash
-    log_info "Building nodogsplash..."
-    cd /tmp
-    rm -rf nodogsplash
-    git clone https://github.com/nodogsplash/nodogsplash.git
-    cd nodogsplash
-    make
-    sudo make install
-
-    # Configure nodogsplash
-    log_info "Configuring nodogsplash..."
-    cat > /etc/nodogsplash/nodogsplash.conf << EOF
-GatewayInterface wlan0
-
-FirewallRuleSet authenticated-users {
-  FirewallRule allow all
-}
-
-FirewallRuleSet preauthenticated-users {
-FirewallRule allow tcp port 53
-FirewallRule allow udp port 53
-}
-
-FirewallRuleSet users-to-router {
-    FirewallRule allow udp port 53
-    FirewallRule allow tcp port 53
-    FirewallRule allow udp port 67
-    FirewallRule allow tcp port 22
-    FirewallRule allow tcp port 80
-    FirewallRule allow tcp port 443
-    FirewallRule allow tcp port 3000
-}
-
-GatewayAddress $SERVER_IP
-RedirectURL $VITE_API_URL
-GatewayPort 2050
-MaxClients $MAX_SSE_CLIENTS
-EOF
-
-    # Create nodogsplash systemd service
-    log_info "Creating nodogsplash systemd service..."
-    cat > /etc/systemd/system/nodogsplash.service << 'EOF'
-[Unit]
-Description=NodeDogSplash Captive Portal
-After=network.target
-
-[Service]
-ExecStart=/usr/bin/nodogsplash -f /etc/nodogsplash/nodogsplash.conf
-ExecReload=/bin/kill -HUP $MAINPID
-Restart=always
-Type=simple
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-    # Enable and start nodogsplash
-    log_info "Enabling nodogsplash..."
-    systemctl daemon-reload
-    systemctl enable nodogsplash
-    systemctl start nodogsplash
-
-    log_success "Nodogsplash captive portal configured"
-
-    log_warn "System will reboot in 30 seconds..."
-    log_warn ""
-    log_warn "After reboot:"
-    log_warn "  1. Connect to the WiFi hotspot"
-    log_warn "  2. Open browser and go to http://$SERVER_IP/login"
-    log_warn "  3. Login with default credentials"
-    log_warn "  4. Configure your WiFi network credentials"
-    log_warn "  5. Configure your Admin credentials"
-    log_warn "  6. Go to /etc/lighttpd/lighttpd.conf to uncomment the lines:"
-    log_warn "       else {"
-    log_warn "          url.redirect = ( \".*\" => \"$VITE_API_URL\" )"
-    log_warn "       }"
-    log_warn "  6. Reboot again"
-    log_warn ""
-
-    # Countdown
-    for i in {30..1}; do
-        printf "\r%sRebooting in: %ds%s    " "$YELLOW" "$i" "$NC"
-        sleep 1
-    done
-    printf "\n"
-
-    reboot
-}
-
 setup_hotspot() {
     log_section "Setting Up WiFi Hotspot (RaspAP)"
-    log_warn "HOTSPOT SETUP - REQUIRES MANUAL CONFIGURATION AND REBOOT"
-    echo ""
-
-    read -p "Continue with RaspAP installation? (y/n): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        log_warn "RaspAP installation skipped"
-        return
-    fi
+    log_warn "HOTSPOT SETUP - REQUIRES REBOOT."
 
     # Set localization (Mexico)
     log_info "Setting localization to Mexico..."
@@ -631,7 +445,6 @@ setup_hotspot() {
 
     # Disable NetworkManager
     log_info "Disabling NetworkManager..."
-#    systemctl stop NetworkManager
     systemctl disable NetworkManager
 
     # Install RaspAP
@@ -644,16 +457,48 @@ setup_hotspot() {
     	--provider 0
 
     # Configure lighttpd
-    log_info "Configuring lighttpd..."
-    cat >> /etc/lighttpd/lighttpd.conf << 'EOF'
+    log_info "Serving RaspAp dashboard page to port 8080..."
+    sudo /etc/raspap/lighttpd/configport.sh 8080 "" /etc/lighttpd/lighttpd.conf
 
-# --- REROUTE EVERYTHING TO PORT 3000 EXCEPT RASPAP ADMIN ---
+    log_info "Creating port $SERVER_PORT redirection to 80 systemd service..."
+    cat > /etc/systemd/system/http-redirect.service << EOF
+[Unit]
+Description=Redirect HTTP 80 to Bun $SERVER_PORT
+After=network.target
 
-# Redirect all other requests to the Node server on port 3000
-#else {
-#    url.redirect = ( ".*" => "http://10.3.141.1" )
-#}
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port $SERVER_PORT
+ExecStart=/usr/sbin/iptables -t nat -A OUTPUT -p tcp --dport 80 -j REDIRECT --to-port $SERVER_PORT
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
 EOF
+    sudo systemctl daemon-reload
+    sudo systemctl enable http-redirect.service
+
+    log_info "Setting Open Network and SSID... "
+    cat > /etc/hostapd/hostapd.conf << EOF
+driver=nl80211
+ctrl_interface=/var/run/hostapd
+ctrl_interface_group=0
+auth_algs=1
+wpa_key_mgmt=WPA-PSK
+beacon_int=100
+ssid=Tanques Interconectados
+channel=1
+hw_mode=g
+ieee80211n=0
+wpa_passphrase=tanques-interconectados
+interface=wlan0
+wpa=none
+wpa_pairwise=CCMP
+country_code=MX
+ignore_broadcast_ssid=0
+max_num_sta=$MAX_SSE_CLIENTS
+EOF
+
     log_warn ""
     log_warn "RaspAP installation complete!"
 }
@@ -666,18 +511,16 @@ show_installation_menu() {
     echo ""
     echo -e "${BLUE}Select installation profile:${NC}"
     echo ""
-    echo "  1) Full installation (all features)"
+    echo "  1) Full installation (essential components + Hotspot)"
     echo "  2) Core installation (essential components)"
-    echo "  3) Core + Portal Redirect (captive portal)"
-    echo "  4) Custom (choose which steps)"
-    echo "  5) Exit"
+    echo "  3) Custom (choose which steps)"
+    echo "  4) Exit"
     echo ""
     read -rp "Enter choice (1-5): " menu_choice
     echo ""
 
     case $menu_choice in
         1)
-            INSTALL_REDIRECT=true
             INSTALL_HOTSPOT=true
             return 0  # Core only
             ;;
@@ -685,14 +528,10 @@ show_installation_menu() {
             return 0
             ;;
         3)
-            INSTALL_REDIRECT=true
-            return 0
-            ;;
-        4)
             custom_installation
             return 0
             ;;
-        5)
+        4)
             log_warn "Installation cancelled"
             exit 0
             ;;
@@ -736,13 +575,7 @@ custom_installation() {
         setup_database_cleanup
     fi
 
-    read -p "Setup portal redirect (nodogsplash)? (y/n): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        INSTALL_REDIRECT=true
-    fi
-
-    read -p "Setup hotspot (raspap)? (y/n): " -n 1 -r
+    read -p "Setup Hotspot (RaspAP)? (y/n): " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         INSTALL_HOTSPOT=true
@@ -755,7 +588,6 @@ custom_installation() {
 
 main() {
     # Initialize flags
-    INSTALL_REDIRECT=false
     INSTALL_HOTSPOT=false
 
     # Print banner
@@ -767,16 +599,11 @@ main() {
 
     # Pre-flight checks
     check_root
-    load_env
-    setup_logging
     check_prerequisites
 
-    # Show menu
     show_installation_menu
-
-    # Setup environment file (interactive)
     setup_env_file
-
+    setup_logging
 
     # Run installation steps
     log_section "Installation Starting"
@@ -791,11 +618,6 @@ main() {
         setup_hotspot
     fi
 
-    # Optional: Portal redirect (requires hotspot to be working)
-    if [ "$INSTALL_REDIRECT" = true ]; then
-        setup_portal_redirect
-    fi
-
     # Success summary
     log_section "Installation Complete"
 
@@ -806,21 +628,24 @@ main() {
     echo "  User: $INSTALL_USER"
     echo ""
 
-    echo -e "${GREEN}Access the application:${NC}"
-    echo "  URL: https://$HOST:$SERVER_PORT"
-    echo "  Hostname: $VITE_API_URL"
+    echo -e "${BLUE}Installation logs: $LOG_DIR/install.log${NC}"
     echo ""
 
     if [ "$INSTALL_HOTSPOT" = true ]; then
         echo -e "${YELLOW}Next Steps:${NC}"
-        echo "  1. System will reboot shortly"
-        echo "  2. Connect to the WiFi hotspot"
-        echo "  3. Open browser and accept terms"
+        echo -e "${RED}1. Reboot the system${NC}"
+        echo -e "${GREEN}2. Connect to the Open WiFi Hotspot: Tanques Interconectados${NC}"
+        echo -e "${GREEN}3. Open the web Network Admin Panel to tweak settings if needed.${NC}"
+        echo "  Network Administration panel: http://$SERVER_IP:8080"
+        echo "    user: admin"
+        echo "    password: secret"
+        echo "    In this dashboard you'll be able to tweak settings such as Hotspot name & password, admin username & password, and restart the Hotspot."
         echo ""
+        echo -e "${GREEN}4. Open the web water-level-acquitistion system dashboard.${NC}"
+        echo "  URL: http://$SERVER_IP"
+        echo "  Complete URL: http://$SERVER_IP:$SERVER_PORT"
+        echo "  In case of any problems visit the README.md guide Troubleshooting section found in this project at https://github.com/AndresSM415/water-level-acquisition-system.git or contact me: https://github.com/AndresSM415."
     fi
-
-    echo -e "${BLUE}Installation logs: $LOG_DIR/install.log${NC}"
-    echo ""
 }
 
 # Run main function with all arguments

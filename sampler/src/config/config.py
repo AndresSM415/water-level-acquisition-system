@@ -11,7 +11,7 @@ load_dotenv()
 class Config:
     # Paths
     DB_PATH: str = os.getenv("DB_PATH")
-    PROJECT_ROOT: str = os.getenv("PROJECT_ROOT")
+    PROJECT_ROOT: str = os.getenv("ROOT_PATH")
     SAMPLER_ROOT: str = os.getenv("SAMPLER_ROOT")
     LOG_PATH: str = os.getenv("LOG_DIR")
 
