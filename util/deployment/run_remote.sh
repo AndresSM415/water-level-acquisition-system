@@ -1,13 +1,12 @@
 #!/user/bin/env bash
 set -e
 
-PI_USER="dr_control"
-PI_HOST="192.168.1.6"
-PI_PATH="/home/${PI_USER}/dr_control_project"
+# Get arguments or use defaults
+PI_USER="${1}"
+PI_HOST="${2}"
+PI_PATH="/home/${PI_USER}/water-level-acquisition-system"
 
-
-
-echo "Syncing project to Raspberry Pi..."
+echo "Syncing project wth $PI_USER@$PI_HOST..."
 rsync -avz --delete \
 	--exclude "doc/"  \
 	--exclude ".git/" \
@@ -17,10 +16,9 @@ rsync -avz --delete \
 	--exclude "README.md" \
 	--exclude ".idea/" \
 	--exclude "__pycache__/" \
-	--exclude "util/" \
 	--exclude "node_modules/" \
 	--exclude "CHANGELOG.md" \
-	--exclude ".env.template" \
+	--exclude "dist/" \
 	. ${PI_USER}@${PI_HOST}:${PI_PATH}
 
 echo "Running project remotely..."

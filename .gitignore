@@ -12,6 +12,7 @@ doc/project-proposal/output/*
 # Bun
 node_modules/
 package-lock.json
+dist/
 
 # Python
 __pycache__/
@@ -31,3 +32,13 @@ __pycache__/
 .idea/
 *.swp
 *.swo
+
+# KiCad
+hardware/pcb/**-backups/
+hardware/pcb/*.kicad_pcb-bak
+hardware/pcb/*.kicad_sch-bak
+hardware/pcb/*~
+hardware/pcb/*.pro~
+
+# Other
+*.pem
