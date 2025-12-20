@@ -4,7 +4,7 @@ import { config } from "@/lib/config.ts";
 export async function downloadData(
     clientId: string,
     decimation: number,
-    startTime?: number | null,
+    startTime: number,
     apiUrl: string = config.apiUrl
 ): Promise<void> {
     startExport();
@@ -15,7 +15,7 @@ export async function downloadData(
         const params = new URLSearchParams({
             clientId,
             decimation: String(decimation),
-            ...(startTime && {startTime: String(startTime) })
+            startTime: String(startTime),
         });
 
         const response = await fetch(`${apiUrl}/api/export?${params}`, {method: 'GET'});

@@ -2,7 +2,7 @@
  * Export route - Download sensor data as CSV.
  */
 import {Hono} from "hono";
-import {SSEManager} from "../services/sse-manager.ts";
+import SSEManager from "../services/sse-manager.ts";
 import {formatTime, formatTimestamp} from "../lib"
 import type {SensorService} from "../services/sensor-service.ts";
 import type {ExportFormat, DecimationInterval} from "@wlas/shared";
@@ -14,7 +14,8 @@ export function createExportRoute(sensorService: SensorService, sseManager: SSEM
         try {
             const clientId = c.req.query("clientId");
             const decimation = parseInt(c.req.query("decimation") || "1") as DecimationInterval;
-            const offsetStartTime = parseInt(c.req.query("offsetStartTime") as string) / 1000;
+            const clientStartTime = parseInt(c.req.query("startTime") as string) / 1000;
+            console.log(c.req.query("startTime"))
 
             if(clientId === undefined || !sseManager.hasClient(clientId)) {
                 return c.json({
@@ -29,21 +30,27 @@ export function createExportRoute(sensorService: SensorService, sseManager: SSEM
                 }, 400);
             }
 
-            if (offsetStartTime === undefined || offsetStartTime <= 0) {
+            const clientOffsetTime = sseManager.getOffsetTime(clientId);
+            if(!clientOffsetTime)
                 return c.json({
-                    error: "Incorrect offset start time",
+                    error: "Missing or incorrect clientId",
                     code: "INVALID_PATH"
-                }, 400)
-            }
-            const endTime = Date.now() / 1000;
-            const startTime = endTime - offsetStartTime
+                }, 400);
 
+            const serverStartTime = clientStartTime + clientOffsetTime;
+
+            const endTime = Date.now() / 1000;
             const format = "csv" as ExportFormat;
             const limit = 3600 * 12;
 
+            if (serverStartTime > endTime)
+                return c.json({
+                    error: "Start time cannot be in the future",
+                    code: "INVALID_TIME_RANGE"
+                }, 400);
             // Export data via service
             const data = await sensorService.exportData(
-                startTime,
+                serverStartTime,
                 endTime,
                 decimation,
                 format,
@@ -59,16 +66,16 @@ export function createExportRoute(sensorService: SensorService, sseManager: SSEM
 
             return c.text(data, 200, {
                 "Content-Type": "text/csv",
-                "Content-Disposition": `attachment; filename="tanques-interconectados_${formatTimestamp(startTime)}_duracion-${formatTime(endTime-startTime)}_periodo-${decimation}s.csv"`,
+                "Content-Disposition": `attachment; filename="tanques-interconectados_${formatTimestamp(clientStartTime)}_duracion-${formatTime(endTime-serverStartTime)}_periodo-${decimation}s.csv"`,
                 "Access-Control-Allow-Origin": "*",
                 "Access-Control-Expose-Headers": "Content-Disposition"
             });
         } catch (error) {
             console.error("export error:", error);
             return c.json({
-                    error: "Export failed",
-                    code: "EXPORT_ERROR",
-                    details: String(error)
+                error: "Export failed",
+                code: "EXPORT_ERROR",
+                details: String(error)
             }, 500);
         }
     });

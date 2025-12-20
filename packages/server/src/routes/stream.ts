@@ -17,7 +17,7 @@
  */
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
-import type { SSEManager } from "../services/sse-manager.ts";
+import SSEManager from "../services/sse-manager.ts";
 import {SensorService} from "../services/sensor-service.ts";
 import type {SSEMessage} from "@wlas/shared";
 
@@ -34,13 +34,17 @@ export function createStreamRoute(
                 503
             );
         }
+        const clientTime = Number(c.req.query("clientTime"));
+        if (!Number.isFinite(clientTime))
+            return c.json({ error: "Missing client time" }, 400)
+
 
         return streamSSE(c, async (stream) => {
             const clientId = crypto.randomUUID();
             let interval: Timer | null = null;
 
             // Register client with SSEManager
-            const added = sseManager.addClient(clientId, stream);
+            const added = sseManager.addClient(clientId, stream, clientTime);
             if (!added) {
                 await stream.writeSSE({
                     data: JSON.stringify({

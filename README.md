@@ -135,7 +135,7 @@ sudo reboot
 ```
 
 ## Data Management
-Sensor data is stored in a SQLite database. To view the database:
+Sensor data is stored in an SQLite database. To view the database:
 ```bash
 sqlite3 /var/lib/wlas/samples.sqlite
 ```
@@ -145,3 +145,39 @@ sqlite3 /var/lib/wlas/samples.sqlite
 1. Verify the sensors are reading correctly in the dashboard
 2. Run an experiment and verify data collection
 3. Download data as CSV for analysis in MATLAB
+
+---
+
+## Roadmap
+
+### v1 — Local Acquisition & Static Dashboard (Current)
+
+* Raspberry Pi–based sensor acquisition and storage (SQLite)
+* Local HTTP API for data access and CSV export
+* Server-Sent Events (SSE) for real-time updates
+* Static, hardcoded dashboard tailored to the current water-level system
+
+Status: **In progress / Near completion**
+
+### v2 — MQTT Integration & Metadata-Driven Dashboard
+
+* Add MQTT support for data ingestion from external devices (e.g. ESP32)
+* Define a metadata schema to describe dashboard layout (charts, units, labels)
+* Devices publish retained metadata and periodic telemetry via MQTT
+* Frontend dynamically renders the dashboard from received metadata
+* Single adaptive dashboard view, independent of acquisition system type
+* Add AP router
+
+Goal: **Remove UI hardcoding and enable reuse across different systems**
+
+---
+
+### v3 — Multi-Device Dynamic Dashboards
+
+* Support multiple concurrent MQTT clients
+* Automatically create a dashboard tab/page per connected device
+* Real-time updates scoped to each device’s data stream
+* Destroy dashboard views on client disconnect (MQTT LWT / timeout)
+* Scalable monitoring of multiple independent acquisition systems
+
+Goal: **Turn the platform into a multi-source monitoring system**

@@ -6,17 +6,17 @@
  */
 import type {SSEMessage} from "@wlas/shared";
 
-// Simplified type for Honjo's SSE stream
+// Simplified type for Hono SSE stream
 interface SSEStream {
     writeSSE: (message: { data: string }) => Promise<void>;
 }
 
 interface ClientSession {
     stream: SSEStream;
-    connectedAt: number;
+    timeOffsetSec: number;
 }
 
-export class SSEManager {
+class SSEManager {
     private clients = new Map<string, ClientSession>();
     private readonly maxClients: number;
 
@@ -27,12 +27,12 @@ export class SSEManager {
     /**
      * Add a new SSE client connection. Returns false if max clients reached.
      */
-    addClient(clientId: string, stream: SSEStream): boolean {
+    addClient(clientId: string, stream: SSEStream, clientTime: number): boolean {
         if (this.isFull())
             return false;
         this.clients.set(clientId, {
             stream,
-            connectedAt: Date.now() / 1000
+            timeOffsetSec:  (Date.now() - clientTime)/1000
         } as ClientSession);
         return true;
     }
@@ -59,10 +59,10 @@ export class SSEManager {
     }
 
     /**
-     * Get connection timestamp for a client
+     * Get client time offset in seconds. (Server time - Client time)
      */
-    getConnectionTime(clientId: string): number | null {
-        return this.clients.get(clientId)?.connectedAt ?? null;
+    getOffsetTime(clientId: string): number | null {
+        return this.clients.get(clientId)?.timeOffsetSec ?? null;
     }
 
     /**
@@ -90,3 +90,5 @@ export class SSEManager {
             this.removeClient(clientId)
     }
 }
+
+export default SSEManager

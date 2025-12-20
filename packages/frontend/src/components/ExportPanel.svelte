@@ -50,7 +50,13 @@
 
     async function handleExport() {
         try {
-            await downloadData(<string>$clientId, localDecimation, getExportStartTime())
+            const startTime = getExportStartTime()
+            if(!startTime) {
+                console.error('Export failed: Not a valid start time selected.')
+                return
+            }
+
+            await downloadData(<string>$clientId, localDecimation, startTime)
             console.log(`handleExport - ${selectedTime}`)
         } catch (error) {
             console.error('Export failed:', error);
