@@ -8,7 +8,7 @@ import {serveStatic} from "hono/bun";
 import fs from "node:fs";
 
 // Services and repositories
-import {SSEManager} from "./services/sse-manager.ts";
+import SSEManager from "./services/sse-manager.ts";
 import {SensorRepository} from "./repositories/sensor-repository.ts";
 import {SensorService} from "./services/sensor-service.ts";
 

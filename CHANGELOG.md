@@ -6,8 +6,15 @@
 - Sampler
   - Calibrate ADS readings.
   - Add an ADS connection recovery mechanism as loose cables cuts communication.
-- Add time drift compensation between server and client for export request
+- v2: Support for mqtt protocol. Dashboard creation with json sent via mqtt.
+- v3: Dynamic dashboard tabs creation for every mqtt client connected
+- improve the SSE clients algorithm
 
+### Fixed:
+- Time drift compensation, export api now takes offset time in milliseconds relative to the current system date.
+- DB cleanup each time the sampler is started.
+
+## [113a298]
 ### Added:
 - More optimizations on DB.
 - ReadMe
@@ -18,16 +25,15 @@
 
 ## [11c0d44]
 ### Added
-- Frontend:
+- Svelte Frontend:
   - Static page with SSE connection
   - Export initial Time habilitated
 - Hotspot with RaspAp
 - Redirection with Hostapd
 - Installation script
 ### Modified
-- Server:
-  - Modified export API to enhanced file naming.
-  - Env loading in a single configuration module
+- Bun Server:
+  -Modified export API to enhanced file naming.
 
 ## [7067c7d]
 ### Added

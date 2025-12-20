@@ -4,8 +4,8 @@ import type { DashboardReading } from "@wlas/shared";
 
 let eventSource: EventSource | null = null;
 let reconnectAttempts: 0;
-const MAX_RECONNECT_ATTEMPTS = 120;
-const RECONNECT_DELAY_MS = 5000;
+const MAX_RECONNECT_ATTEMPTS = 100;
+const RECONNECT_DELAY_MS = 3000;
 
 export function connectToSSE(apiUrl: string): void {
     if (eventSource) {
@@ -13,10 +13,14 @@ export function connectToSSE(apiUrl: string): void {
         return;
     }
 
-    console.log(`[SEE] Connecting to ${apiUrl}/api/stream`);
+    const params = new URLSearchParams({
+        clientTime: String(Date.now()),
+    });
+
+    console.log(`[SEE] Connecting to ${apiUrl}/api/stream?${params}`);
     connectionState.set('connecting')
 
-    eventSource = new EventSource(`${apiUrl}/api/stream`);
+    eventSource = new EventSource(`${apiUrl}/api/stream?${params}`);
 
     eventSource.onopen = () => {
         console.log('[SEE] Connecting');

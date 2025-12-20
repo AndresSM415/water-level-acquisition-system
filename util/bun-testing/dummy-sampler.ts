@@ -57,9 +57,9 @@ const insertStmt = db.prepare(`
 function generateSample() {
     return {
         timestamp: Date.now() / 1000,
-        tank1_voltage: Math.random() * 3.3,
-        tank2_voltage: Math.random() * 3.3,
-        tank3_voltage: Math.random() * 3.3,
+        tank1_voltage: Math.random() * 5,
+        tank2_voltage: Math.random() * 5,
+        tank3_voltage: Math.random() * 5,
         flow1_lps: Math.random() * 2,
         flow1_pulses: Math.floor(Math.random() * 1000),
         flow2_lps: Math.random() * 2,

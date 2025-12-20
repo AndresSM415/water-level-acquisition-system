@@ -219,6 +219,7 @@ if __name__ == "__main__":
         asyncio.run(cleanup_old_data())
     else:
         try:
+            asyncio.run(cleanup_old_data())
             sampler = Sampler()
             asyncio.run(sampler.run())
         except KeyboardInterrupt:
