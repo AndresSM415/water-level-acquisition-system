@@ -1,9 +1,6 @@
 """
 Cleanup script to remove old data.
 Run this script as a daemon on systemd to prevent database from growing indefinitely.
-
-Example executable (i.e. daily at 3 AM):
-uv run /path/to/cleanup_old_data.py
 """
 import asyncio
 from datetime import datetime, timedelta
@@ -23,15 +20,40 @@ async def cleanup_old_data():
         cutoff_timestamp = (datetime.now() - timedelta(days=Config.DATA_RETENTION_DAYS)).timestamp()
 
         async with db.get_session() as session:
-            result = await session.execute(text(f"DELETE FROM sensor_samples WHERE timestamp < {cutoff_timestamp}"))
+            # 1. Check if table exists
+            table_check = await session.execute(
+                text("""
+                    SELECT name
+                    FROM sqlite_master
+                    WHERE type='table' AND name='sensor_samples'
+                """)
+            )
+
+            if table_check.scalar() is None:
+                log.warning("Table 'sensor_samples' does not exist. Skipping cleanup.")
+                return
+
+            # 2. Delete old data
+            result = await session.execute(
+                text("""
+                    DELETE FROM sensor_samples
+                    WHERE timestamp < :cutoff
+                """),
+                {"cutoff": cutoff_timestamp}
+            )
+
             await session.commit()
-            deleted_count = result.rowcount
+            deleted_count = result.rowcount or 0
 
-        async with db.engine.begin() as conn:
-            await conn.execute(text("VACUUM"))
+        # 3. Vacuum only if something was deleted
+        if deleted_count > 0:
+            async with db.engine.begin() as conn:
+                await conn.execute(text("VACUUM"))
 
-        log.warning(f"Cleanup complete: Removed {deleted_count} samples older than {Config.DATA_RETENTION_DAYS} days.")
-        log.warning(f"Cutoff date: {datetime.fromtimestamp(cutoff_timestamp)}")
+            log.warning(f"Cleanup complete: Removed {deleted_count} samples older than {Config.DATA_RETENTION_DAYS} days.")
+            log.warning(f"Cutoff date: {datetime.fromtimestamp(cutoff_timestamp)}")
+    except Exception as e:
+        log.error(f"Error while cleaning DB: {e}")
     finally:
         await db.close()
 

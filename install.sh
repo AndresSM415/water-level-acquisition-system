@@ -55,7 +55,7 @@ log_section() {
 
 check_root() {
     if [ "$EUID" -ne 0 ]; then
-        log_error "This script must be run with sudo. i.e. sudo ./install.sh"
+        log_error "This script must be run with sudo, i.e. sudo ./install.sh"
         exit 1
     fi
 }
@@ -65,7 +65,7 @@ check_prerequisites() {
 
     # Check OS
     if ! grep -qi "raspberry\|debian\|ubuntu" /etc/os-release; then
-        log_error "This script is designed for Raspberry Pi OS (Debian-based)."
+        log_error "This script is designed for Raspberry Pi OS."
         exit 1
     fi
 
@@ -86,6 +86,9 @@ setup_env_file() {
     AUTO_CLEANUP_ENABLED="true"
     HOST="0.0.0.0"
     SERVER_IP="10.3.141.1"
+    SAMPLE_TABLE="sensor_samples"
+    DB_FILE="samples.sqlite"
+    LOG_FILE="sampler.log"
 
     # Ask user for customizable variables
     echo -e "${BLUE}press Enter to use defaults:${NC}"
@@ -99,15 +102,6 @@ setup_env_file() {
 
     read -rp "Data retention days (default: 30): " retention_days
     DATA_RETENTION_DAYS="${retention_days:-30}"
-
-    read -rp "Database file (default: samples.sqlite): " db_file
-    DB_FILE="${db_file:-"samples.sqlite"}"
-
-    read -rp "Sample table name (default: sensor_samples): " sample_table
-    SAMPLE_TABLE="${sample_table:-"sensor_samples"}"
-
-    read -rp "Log file name (default: sampler.log): " log_file
-    LOG_FILE="${log_file:-"sampler.log"}"
 
     read -rp "Maximum Concurrent clients (default: 19): " log_file
     MAX_SSE_CLIENTS="${log_file:-19}"

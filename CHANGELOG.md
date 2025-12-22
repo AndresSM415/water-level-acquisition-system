@@ -9,10 +9,12 @@
 - v2: Support for mqtt protocol. Dashboard creation with json sent via mqtt.
 - v3: Dynamic dashboard tabs creation for every mqtt client connected
 - improve the SSE clients algorithm
+- change vite to bun's bundler
 
 ### Fixed:
 - Time drift compensation, export api now takes offset time in milliseconds relative to the current system date.
 - DB cleanup each time the sampler is started.
+- DB cleanup error when no table existed.
 
 ## [113a298]
 ### Added:

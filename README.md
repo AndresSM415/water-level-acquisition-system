@@ -27,9 +27,9 @@ sudo reboot
 
 
 ### 4. Reconfigure RaspAP WiFi Hotspot (Optional)
-Once rebooted, connect to the Open RaspAP WiFi hotspot:
+Once rebooted, connect to the Open RaspAP WiFi Hotspot:
 1. **Connect to WiFi:**
-   - Look for a open WiFi network named `Tanques Interconectados`.
+   - Look for an open WiFi network named `Tanques Interconectados`.
 
 2. **Access RaspAP Dashboard:**
    - Open a web browser
@@ -72,7 +72,7 @@ Possible reasons:
 - Dependencies or project not build correctly. Rerun the installation script.
 
 ### Can't find WiFi or connect to it.
-- The RaspAP hotspot should appear as an open network after installation.
+- The RaspAP Hotspot should appear as an open network after installation.
 - If it gets stuck loading then the Hotspot service is failing due to a wrong configuration.
 - Check:
 ```bash
@@ -105,6 +105,14 @@ Check if data is fetched correctly:
 tail -f /var/log/wlas/sampler.log
 ```
 
+### Maximum Concurrent Users 
+The Hotspot supports approximately 10–19 concurrent clients. This limitation is imposed by the Raspberry Pi Wi-Fi firmware/driver (see [RaspAP issue #462 – firmware client limit](https://github.com/RaspAP/raspap-webgui/issues/462#issuecomment-588367233)).
+The Hotspot will fail or refuse new clients when it's close to its limit.
+
+To overcome this limitation, use an external Soft AP device (for example, a dedicated access point or router) and run the Raspberry Pi only as the backend server.
+
+---
+
 ## Service Management
 Control the services manually with these commands:
 ```bash
@@ -121,13 +129,13 @@ sudo systemctl restart wlas-backend.service
 sudo systemctl restart wlas-sampler.service
 ```
 ### Reconnect to Internet
-Turn off the Raspberry Hotspot:
+Turn off the Hotspot:
 ```bash
 sudo systemctl disable hostapd.service
 sudo systemctl enable NetworkManager.service
 sudo reboot
 ```
-Re-enable the Hotspot:
+Re-enable it:
 ```bash
 sudo systemctl disable NetworkManager.service
 sudo systemctl enable hostapd.service
@@ -141,7 +149,6 @@ sqlite3 /var/lib/wlas/samples.sqlite
 ```
 
 ## Next Steps
-
 1. Verify the sensors are reading correctly in the dashboard
 2. Run an experiment and verify data collection
 3. Download data as CSV for analysis in MATLAB
@@ -156,8 +163,6 @@ sqlite3 /var/lib/wlas/samples.sqlite
 * Local HTTP API for data access and CSV export
 * Server-Sent Events (SSE) for real-time updates
 * Static, hardcoded dashboard tailored to the current water-level system
-
-Status: **In progress / Near completion**
 
 ### v2 — MQTT Integration & Metadata-Driven Dashboard
 
